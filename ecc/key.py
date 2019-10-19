@@ -1,3 +1,5 @@
+# Reference to https://github.com/AntonKueltz/fastecdsa
+
 from binascii import hexlify
 from os import urandom
 
