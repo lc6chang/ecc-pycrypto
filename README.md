@@ -5,6 +5,12 @@ This is a Python package for ECC and ElGamal elliptic curve encryption.
 
 TODO
 
+## Warning
+
+This project only aims to help you learn and understand what is ECC and how the algorithm works. **Do not use is directly in production environment!**
+
+Some cons: The operations of curve points are just implemented in a common way. We don't implement them using [Jacobian Coordinates](https://en.wikibooks.org/wiki/Cryptography/Prime_Curve/Jacobian_Coordinates). Also, we implement them in pure Python. It will be slower than C.
+
 ## Installation
 
 ```bash
@@ -13,7 +19,7 @@ cd ecc-pycrypto
 pip3 install .
 ```
 
-## Usage
+## Usages
 
 ### ElGamal elliptic curve encryption and decryption
 
