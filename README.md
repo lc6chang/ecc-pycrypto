@@ -3,7 +3,13 @@ This is a Python package for ECC and ElGamal elliptic curve encryption.
 
 ## Introduction
 
-TODO
++ [ElGamal encryption](https://en.wikipedia.org/wiki/ElGamal_encryption) is a public-key cryptosystem. It uses asymmetric key encryption for communicating between two parties and encrypting the message.
+
++ [Elliptic-curve cryptography (ECC)](https://en.wikipedia.org/wiki/Elliptic_curve_cryptography) is an approach to public-key cryptography based on the algebraic structure of elliptic curves over finite fields.
+  + [SafeCurves](https://safecurves.cr.yp.to/) shows us the safety Elliptic curve.
+  + There are three typical curves: [Weierstrass Curve](https://en.wikipedia.org/wiki/Elliptic_curve), [Montgomery Curve](https://en.wikipedia.org/wiki/Montgomery_curve) and [Twisted Edwards Curve](https://en.wikipedia.org/wiki/Twisted_Edwards_curve).
+
++ For ElGamal elliptic curve crypto, please refer to [Architectural Evaluation of Algorithms RSA, ECC and MQQ in Arm Processors](https://www.researchgate.net/publication/269672660_Architectural_Evaluation_of_Algorithms_RSA_ECC_and_MQQ_in_Arm_Processors).
 
 ## Warning
 
