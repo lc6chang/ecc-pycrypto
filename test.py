@@ -2,7 +2,7 @@ from ecc.curve import P256, Curve25519, Point
 from ecc.key import gen_keypair
 from ecc.cipher import ElGamal
 
-plain_text = b'This-is-test-plaintext'
+plain_text = b"This-is-test-plaintext"
 
 pri_key, pub_key = gen_keypair(Curve25519)
 
