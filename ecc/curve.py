@@ -31,14 +31,14 @@ class Curve:
         pass
 
     @abstractmethod
-    def _add_point(self, p, q):
+    def add_point(self, p, q):
         pass
 
     @abstractmethod
-    def _double_point(self, p):
+    def double_point(self, p):
         pass
 
-    def _mul_point(self, d, p):
+    def mul_point(self, d, p):
         """
         https://en.wikipedia.org/wiki/Elliptic_curve_point_multiplication
         """
@@ -47,10 +47,10 @@ class Curve:
         while d:
             if d & 0x1 == 1:
                 if res:
-                    res = self._add_point(res, tmp)
+                    res = self.add_point(res, tmp)
                 else:
                     res = tmp
-            tmp = self._double_point(tmp)
+            tmp = self.double_point(tmp)
             d >>= 1
         return res
 
@@ -86,7 +86,7 @@ class ShortWeierstrassCurve(Curve):
         right = (p.x * p.x * p.x) + (self.a * p.x) + self.b
         return (left - right) % self.p == 0
 
-    def _add_point(self, p, q):
+    def add_point(self, p, q):
         delta_x = p.x - q.x
         delta_y = p.y - q.y
         s = delta_y * modinv(delta_x, self.p)
@@ -94,7 +94,7 @@ class ShortWeierstrassCurve(Curve):
         res_y = (p.y + s * (res_x - p.x)) % self.p
         return - Point(res_x, res_y, self)
 
-    def _double_point(self, p):
+    def double_point(self, p):
         s = (3 * p.x * p.x + self.a) * modinv(2 * p.y, self.p)
         res_x = (s * s - 2 * p.x) % self.p
         res_y = (p.y + s * (res_x - p.x)) % self.p
@@ -124,7 +124,7 @@ class MontgomeryCurve(Curve):
         y = modsqrt(right, self.p)
         return y
 
-    def _add_point(self, p, q):
+    def add_point(self, p, q):
         delta_x = p.x - q.x
         delta_y = p.y - q.y
         s = delta_y * modinv(delta_x, self.p)
@@ -132,7 +132,7 @@ class MontgomeryCurve(Curve):
         res_y = (p.y + s * (res_x - p.x)) % self.p
         return - Point(res_x, res_y, self)
 
-    def _double_point(self, p):
+    def double_point(self, p):
         up = 3 * p.x * p.x + 2 * self.a * p.x + 1
         down = 2 * self.b * p.y
         s = up * modinv(down, self.p)
@@ -168,8 +168,8 @@ class Point:
 
     def __add__(self, other):
         if self == other:
-            return self.curve._double_point(other)
-        return self.curve._add_point(self, other)
+            return self.curve.double_point(other)
+        return self.curve.add_point(self, other)
 
     def __radd__(self, other):
         return self.__add__(other)
@@ -179,7 +179,7 @@ class Point:
         return self.__add__(negative)
 
     def __mul__(self, scalar):
-        return self.curve._mul_point(scalar, self)
+        return self.curve.mul_point(scalar, self)
 
     def __rmul__(self, scalar):
         return self.__mul__(scalar)
