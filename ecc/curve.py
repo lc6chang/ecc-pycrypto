@@ -34,22 +34,38 @@ class Curve(ABC):
     def G(self) -> "Point":
         return Point(self.G_x, self.G_y, self)
 
-    @abstractmethod
     def is_on_curve(self, P: "Point") -> bool:
-        pass
+        return P.curve == self and self._is_on_curve(P)
 
     @abstractmethod
+    def _is_on_curve(self, P: "Point") -> bool:
+        pass
+
     def add_point(self, P: "Point", Q: "Point") -> "Point":
-        pass
+        if (not self.is_on_curve(P)) or (not self.is_on_curve(Q)):
+            raise ValueError("The point is not on the curve.")
+        return self._add_point(P, Q)
 
     @abstractmethod
+    def _add_point(self, P: "Point", Q: "Point") -> "Point":
+        pass
+
     def double_point(self, P: "Point") -> "Point":
+        if not self.is_on_curve(P):
+            raise ValueError("The point is not on the curve.")
+        return self._double_point(P)
+
+    @abstractmethod
+    def _double_point(self, P: "Point") -> "Point":
         pass
 
     def mul_point(self, d: int, P: "Point") -> "Point":
         """
         https://en.wikipedia.org/wiki/Elliptic_curve_point_multiplication
         """
+        if not self.is_on_curve(P):
+            raise ValueError("The point is not on the curve.")
+
         res = None
         is_negative_scalar = d < 0
         d = -d if is_negative_scalar else d
@@ -72,9 +88,9 @@ class Curve(ABC):
         pass
 
     def encode_point(self, plaintext: bytes) -> "Point":
-        plaintext = len(plaintext).to_bytes(1, byteorder='big') + plaintext
+        plaintext = len(plaintext).to_bytes(1, byteorder="big") + plaintext
         while True:
-            x = int.from_bytes(plaintext, 'big')
+            x = int.from_bytes(plaintext, "big")
             y = self.compute_y(x)
             if y:
                 return Point(x, y, self)
@@ -84,8 +100,8 @@ class Curve(ABC):
         byte_len = int_length_in_byte(M.x)
         plaintext_len = (M.x >> ((byte_len - 1) * 8)) & 0xff
         plaintext = ((M.x >> ((byte_len - plaintext_len - 1) * 8))
-                     & (int.from_bytes(b'\xff' * plaintext_len, 'big')))
-        return plaintext.to_bytes(plaintext_len, byteorder='big')
+                     & (int.from_bytes(b"\xff" * plaintext_len, "big")))
+        return plaintext.to_bytes(plaintext_len, byteorder="big")
 
 
 class ShortWeierstrassCurve(Curve):
@@ -94,12 +110,12 @@ class ShortWeierstrassCurve(Curve):
     https://en.wikipedia.org/wiki/Elliptic_curve
     """
 
-    def is_on_curve(self, P: "Point") -> bool:
+    def _is_on_curve(self, P: "Point") -> bool:
         left = P.y * P.y
         right = (P.x * P.x * P.x) + (self.a * P.x) + self.b
         return (left - right) % self.p == 0
 
-    def add_point(self, P: "Point", Q: "Point") -> "Point":
+    def _add_point(self, P: "Point", Q: "Point") -> "Point":
         delta_x = P.x - Q.x
         delta_y = P.y - Q.y
         s = delta_y * modinv(delta_x, self.p)
@@ -107,7 +123,7 @@ class ShortWeierstrassCurve(Curve):
         res_y = (P.y + s * (res_x - P.x)) % self.p
         return - Point(res_x, res_y, self)
 
-    def double_point(self, P: "Point") -> "Point":
+    def _double_point(self, P: "Point") -> "Point":
         s = (3 * P.x * P.x + self.a) * modinv(2 * P.y, self.p)
         res_x = (s * s - 2 * P.x) % self.p
         res_y = (P.y + s * (res_x - P.x)) % self.p
@@ -125,19 +141,12 @@ class MontgomeryCurve(Curve):
     https://en.wikipedia.org/wiki/Montgomery_curve
     """
 
-    def is_on_curve(self, P: "Point") -> bool:
+    def _is_on_curve(self, P: "Point") -> bool:
         left = self.b * P.y * P.y
         right = (P.x * P.x * P.x) + (self.a * P.x * P.x) + P.x
         return (left - right) % self.p == 0
 
-    def compute_y(self, x: int) -> int:
-        right = (x * x * x + self.a * x * x + x) % self.p
-        inv_b = modinv(self.b, self.p)
-        right = (right * inv_b) % self.p
-        y = modsqrt(right, self.p)
-        return y
-
-    def add_point(self, P: "Point", Q: "Point") -> "Point":
+    def _add_point(self, P: "Point", Q: "Point") -> "Point":
         delta_x = P.x - Q.x
         delta_y = P.y - Q.y
         s = delta_y * modinv(delta_x, self.p)
@@ -145,13 +154,20 @@ class MontgomeryCurve(Curve):
         res_y = (P.y + s * (res_x - P.x)) % self.p
         return - Point(res_x, res_y, self)
 
-    def double_point(self, P: "Point") -> "Point":
+    def _double_point(self, P: "Point") -> "Point":
         up = 3 * P.x * P.x + 2 * self.a * P.x + 1
         down = 2 * self.b * P.y
         s = up * modinv(down, self.p)
         res_x = (self.b * s * s - self.a - 2 * P.x) % self.p
         res_y = (P.y + s * (res_x - P.x)) % self.p
         return - Point(res_x, res_y, self)
+
+    def compute_y(self, x: int) -> int:
+        right = (x * x * x + self.a * x * x + x) % self.p
+        inv_b = modinv(self.b, self.p)
+        right = (right * inv_b) % self.p
+        y = modsqrt(right, self.p)
+        return y
 
 
 @dataclass
@@ -162,10 +178,10 @@ class Point:
 
     def __post_init__(self):
         if not self.curve.is_on_curve(self):
-            ValueError('The point is not on the curve.')
+            raise ValueError("The point is not on the curve.")
 
     def __str__(self):
-        return f'X: {self.x}\nY: {self.y}\nCurve: {str(self.curve)}'
+        return f"X: {self.x}\nY: {self.y}\nCurve: {str(self.curve)}"
 
     def __repr__(self):
         return self.__str__()
@@ -196,7 +212,7 @@ class Point:
 
 
 P256 = ShortWeierstrassCurve(
-    name='P256',
+    name="P256",
     a=-3,
     b=41058363725152142129326129780047268409114441015993725554835256314039467401291,
     p=115792089210356248762697446949407573530086143415290314195533631308867097853951,
@@ -206,7 +222,7 @@ P256 = ShortWeierstrassCurve(
 )
 
 secp256k1 = ShortWeierstrassCurve(
-    name='secp256k1',
+    name="secp256k1",
     a=0x0,
     b=0x7,
     p=0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F,
@@ -216,7 +232,7 @@ secp256k1 = ShortWeierstrassCurve(
 )
 
 Curve25519 = MontgomeryCurve(
-    name='Curve25519',
+    name="Curve25519",
     a=486662,
     b=1,
     p=0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffed,
@@ -226,7 +242,7 @@ Curve25519 = MontgomeryCurve(
 )
 
 M383 = MontgomeryCurve(
-    name='M383',
+    name="M383",
     a=2065150,
     b=1,
     p=0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff45,
