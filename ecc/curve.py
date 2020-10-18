@@ -1,10 +1,56 @@
 from os import urandom
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from typing import Optional
 
 from ecc.math_utils.mod_inverse import modinv
 from ecc.math_utils.mod_sqrt import modsqrt
 from ecc.utils import int_length_in_byte
+
+
+@dataclass
+class Point:
+    x: Optional[int]
+    y: Optional[int]
+    curve: "Curve"
+
+    def is_at_infinity(self) -> bool:
+        return self.x is None and self.y is None
+
+    def __post_init__(self):
+        if not self.is_at_infinity() and not self.curve.is_on_curve(self):
+            raise ValueError("The point is not on the curve.")
+
+    def __str__(self):
+        if self.is_at_infinity():
+            return f"Point(At infinity, Curve={str(self.curve)})"
+        else:
+            return f"Point(X={self.x}, Y={self.y}, Curve={str(self.curve)})"
+
+    def __repr__(self):
+        return self.__str__()
+
+    def __eq__(self, other):
+        return self.curve == other.curve and self.x == other.x and self.y == other.y
+
+    def __neg__(self):
+        return self.curve.neg_point(self)
+
+    def __add__(self, other):
+        return self.curve.add_point(self, other)
+
+    def __radd__(self, other):
+        return self.__add__(other)
+
+    def __sub__(self, other):
+        negative = - other
+        return self.__add__(negative)
+
+    def __mul__(self, scalar: int):
+        return self.curve.mul_point(scalar, self)
+
+    def __rmul__(self, scalar: int):
+        return self.__mul__(scalar)
 
 
 @dataclass
@@ -24,47 +70,64 @@ class Curve(ABC):
         return self.__str__()
 
     def __eq__(self, other):
-        assert isinstance(other, Curve)
         return (
             self.a == other.a and self.b == other.b and self.p == other.p and
             self.n == other.n and self.G_x == other.G_x and self.G_y == other.G_y
         )
 
     @property
-    def G(self) -> "Point":
+    def G(self) -> Point:
         return Point(self.G_x, self.G_y, self)
 
-    def is_on_curve(self, P: "Point") -> bool:
-        return P.curve == self and self._is_on_curve(P)
+    @property
+    def INF(self) -> Point:
+        return Point(None, None, self)
+
+    def is_on_curve(self, P: Point) -> bool:
+        if P.curve != self:
+            return False
+        return P.is_at_infinity() or self._is_on_curve(P)
 
     @abstractmethod
-    def _is_on_curve(self, P: "Point") -> bool:
+    def _is_on_curve(self, P: Point) -> bool:
         pass
 
-    def add_point(self, P: "Point", Q: "Point") -> "Point":
+    def add_point(self, P: Point, Q: Point) -> Point:
         if (not self.is_on_curve(P)) or (not self.is_on_curve(Q)):
-            raise ValueError("The point is not on the curve.")
+            raise ValueError("The points are not on the curve.")
+        if P.is_at_infinity():
+            return Q
+        elif Q.is_at_infinity():
+            return P
+
+        if P == Q:
+            return self._double_point(P)
         return self._add_point(P, Q)
 
     @abstractmethod
-    def _add_point(self, P: "Point", Q: "Point") -> "Point":
+    def _add_point(self, P: Point, Q: Point) -> Point:
         pass
 
-    def double_point(self, P: "Point") -> "Point":
+    def double_point(self, P: Point) -> Point:
         if not self.is_on_curve(P):
             raise ValueError("The point is not on the curve.")
+        if P.is_at_infinity():
+            return P
+
         return self._double_point(P)
 
     @abstractmethod
-    def _double_point(self, P: "Point") -> "Point":
+    def _double_point(self, P: Point) -> Point:
         pass
 
-    def mul_point(self, d: int, P: "Point") -> "Point":
+    def mul_point(self, d: int, P: Point) -> Point:
         """
         https://en.wikipedia.org/wiki/Elliptic_curve_point_multiplication
         """
         if not self.is_on_curve(P):
             raise ValueError("The point is not on the curve.")
+        if P.is_at_infinity():
+            return P
 
         res = None
         is_negative_scalar = d < 0
@@ -83,11 +146,19 @@ class Curve(ABC):
         else:
             return res
 
+    def neg_point(self, P: Point) -> Point:
+        if not self.is_on_curve(P):
+            raise ValueError("The point is not on the curve.")
+        if P.is_at_infinity():
+            return P
+
+        return Point(P.x, -P.y % self.p, self)
+
     @abstractmethod
     def compute_y(self, x: int) -> int:
         pass
 
-    def encode_point(self, plaintext: bytes) -> "Point":
+    def encode_point(self, plaintext: bytes) -> Point:
         plaintext = len(plaintext).to_bytes(1, byteorder="big") + plaintext
         while True:
             x = int.from_bytes(plaintext, "big")
@@ -96,7 +167,7 @@ class Curve(ABC):
                 return Point(x, y, self)
             plaintext += urandom(1)
 
-    def decode_point(self, M: "Point") -> bytes:
+    def decode_point(self, M: Point) -> bytes:
         byte_len = int_length_in_byte(M.x)
         plaintext_len = (M.x >> ((byte_len - 1) * 8)) & 0xff
         plaintext = ((M.x >> ((byte_len - plaintext_len - 1) * 8))
@@ -110,12 +181,12 @@ class ShortWeierstrassCurve(Curve):
     https://en.wikipedia.org/wiki/Elliptic_curve
     """
 
-    def _is_on_curve(self, P: "Point") -> bool:
+    def _is_on_curve(self, P: Point) -> bool:
         left = P.y * P.y
         right = (P.x * P.x * P.x) + (self.a * P.x) + self.b
         return (left - right) % self.p == 0
 
-    def _add_point(self, P: "Point", Q: "Point") -> "Point":
+    def _add_point(self, P: Point, Q: Point) -> Point:
         delta_x = P.x - Q.x
         delta_y = P.y - Q.y
         s = delta_y * modinv(delta_x, self.p)
@@ -123,7 +194,7 @@ class ShortWeierstrassCurve(Curve):
         res_y = (P.y + s * (res_x - P.x)) % self.p
         return - Point(res_x, res_y, self)
 
-    def _double_point(self, P: "Point") -> "Point":
+    def _double_point(self, P: Point) -> Point:
         s = (3 * P.x * P.x + self.a) * modinv(2 * P.y, self.p)
         res_x = (s * s - 2 * P.x) % self.p
         res_y = (P.y + s * (res_x - P.x)) % self.p
@@ -141,12 +212,12 @@ class MontgomeryCurve(Curve):
     https://en.wikipedia.org/wiki/Montgomery_curve
     """
 
-    def _is_on_curve(self, P: "Point") -> bool:
+    def _is_on_curve(self, P: Point) -> bool:
         left = self.b * P.y * P.y
         right = (P.x * P.x * P.x) + (self.a * P.x * P.x) + P.x
         return (left - right) % self.p == 0
 
-    def _add_point(self, P: "Point", Q: "Point") -> "Point":
+    def _add_point(self, P: Point, Q: Point) -> Point:
         delta_x = P.x - Q.x
         delta_y = P.y - Q.y
         s = delta_y * modinv(delta_x, self.p)
@@ -154,7 +225,7 @@ class MontgomeryCurve(Curve):
         res_y = (P.y + s * (res_x - P.x)) % self.p
         return - Point(res_x, res_y, self)
 
-    def _double_point(self, P: "Point") -> "Point":
+    def _double_point(self, P: Point) -> Point:
         up = 3 * P.x * P.x + 2 * self.a * P.x + 1
         down = 2 * self.b * P.y
         s = up * modinv(down, self.p)
@@ -168,47 +239,6 @@ class MontgomeryCurve(Curve):
         right = (right * inv_b) % self.p
         y = modsqrt(right, self.p)
         return y
-
-
-@dataclass
-class Point:
-    x: int
-    y: int
-    curve: Curve
-
-    def __post_init__(self):
-        if not self.curve.is_on_curve(self):
-            raise ValueError("The point is not on the curve.")
-
-    def __str__(self):
-        return f"X: {self.x}\nY: {self.y}\nCurve: {str(self.curve)}"
-
-    def __repr__(self):
-        return self.__str__()
-
-    def __eq__(self, other):
-        return self.curve == other.curve and self.x == other.x and self.y == other.y
-
-    def __neg__(self):
-        return Point(self.x, -self.y % self.curve.p, self.curve)
-
-    def __add__(self, other):
-        if self == other:
-            return self.curve.double_point(other)
-        return self.curve.add_point(self, other)
-
-    def __radd__(self, other):
-        return self.__add__(other)
-
-    def __sub__(self, other):
-        negative = - other
-        return self.__add__(negative)
-
-    def __mul__(self, scalar):
-        return self.curve.mul_point(scalar, self)
-
-    def __rmul__(self, scalar):
-        return self.__mul__(scalar)
 
 
 P256 = ShortWeierstrassCurve(

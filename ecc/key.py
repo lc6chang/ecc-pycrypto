@@ -24,8 +24,8 @@ def gen_private_key(curve: Curve,
         order >>= 1
         order_bits += 1
 
-    order_bytes = (order_bits + 7) // 8  
-    extra_bits = order_bytes * 8 - order_bits  
+    order_bytes = (order_bits + 7) // 8
+    extra_bits = order_bytes * 8 - order_bits
 
     rand = int(hexlify(randfunc(order_bytes)), 16)
     rand >>= extra_bits
