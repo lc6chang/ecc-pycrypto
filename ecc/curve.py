@@ -1,6 +1,7 @@
 from os import urandom
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from typing import Optional
 
 from ecc.math_utils.mod_inverse import modinv
 from ecc.math_utils.mod_sqrt import modsqrt
@@ -9,33 +10,33 @@ from ecc.utils import int_length_in_byte
 
 @dataclass
 class Point:
-    x: int
-    y: int
+    x: Optional[int]
+    y: Optional[int]
     curve: "Curve"
 
+    def is_at_infinity(self) -> bool:
+        return self.x is None and self.y is None
+
     def __post_init__(self):
-        if not self.curve.is_on_curve(self):
+        if not self.is_at_infinity() and not self.curve.is_on_curve(self):
             raise ValueError("The point is not on the curve.")
 
     def __str__(self):
-        return f"Point(X={self.x}, Y={self.y}, Curve={str(self.curve)})"
+        if self.is_at_infinity():
+            return f"Point(At infinity, Curve={str(self.curve)})"
+        else:
+            return f"Point(X={self.x}, Y={self.y}, Curve={str(self.curve)})"
 
     def __repr__(self):
         return self.__str__()
 
     def __eq__(self, other):
-        assert isinstance(other, Point)
         return self.curve == other.curve and self.x == other.x and self.y == other.y
 
     def __neg__(self):
-        return Point(self.x, -self.y % self.curve.p, self.curve)
+        return self.curve.neg_point(self)
 
     def __add__(self, other):
-        assert isinstance(other, Point)
-        if other.curve != self.curve:
-            raise ValueError("Two points must be on the same curve.")
-        if other == self:
-            return self.curve.double_point(other)
         return self.curve.add_point(self, other)
 
     def __radd__(self, other):
@@ -46,7 +47,6 @@ class Point:
         return self.__add__(negative)
 
     def __mul__(self, scalar: int):
-        assert isinstance(scalar, int)
         return self.curve.mul_point(scalar, self)
 
     def __rmul__(self, scalar: int):
@@ -70,7 +70,6 @@ class Curve(ABC):
         return self.__str__()
 
     def __eq__(self, other):
-        assert isinstance(other, Curve)
         return (
             self.a == other.a and self.b == other.b and self.p == other.p and
             self.n == other.n and self.G_x == other.G_x and self.G_y == other.G_y
@@ -80,8 +79,14 @@ class Curve(ABC):
     def G(self) -> Point:
         return Point(self.G_x, self.G_y, self)
 
+    @property
+    def INF(self) -> Point:
+        return Point(None, None, self)
+
     def is_on_curve(self, P: Point) -> bool:
-        return P.curve == self and self._is_on_curve(P)
+        if P.curve != self:
+            return False
+        return P.is_at_infinity() or self._is_on_curve(P)
 
     @abstractmethod
     def _is_on_curve(self, P: Point) -> bool:
@@ -89,7 +94,14 @@ class Curve(ABC):
 
     def add_point(self, P: Point, Q: Point) -> Point:
         if (not self.is_on_curve(P)) or (not self.is_on_curve(Q)):
-            raise ValueError("The point is not on the curve.")
+            raise ValueError("The points are not on the curve.")
+        if P.is_at_infinity():
+            return Q
+        elif Q.is_at_infinity():
+            return P
+
+        if P == Q:
+            return self.double_point(P)
         return self._add_point(P, Q)
 
     @abstractmethod
@@ -99,6 +111,9 @@ class Curve(ABC):
     def double_point(self, P: Point) -> Point:
         if not self.is_on_curve(P):
             raise ValueError("The point is not on the curve.")
+        if P.is_at_infinity():
+            return P
+
         return self._double_point(P)
 
     @abstractmethod
@@ -111,6 +126,8 @@ class Curve(ABC):
         """
         if not self.is_on_curve(P):
             raise ValueError("The point is not on the curve.")
+        if P.is_at_infinity():
+            return P
 
         res = None
         is_negative_scalar = d < 0
@@ -128,6 +145,14 @@ class Curve(ABC):
             return -res
         else:
             return res
+
+    def neg_point(self, P: Point) -> Point:
+        if not self.is_on_curve(P):
+            raise ValueError("The point is not on the curve.")
+        if P.is_at_infinity():
+            return P
+
+        return Point(P.x, -P.y % self.p, self)
 
     @abstractmethod
     def compute_y(self, x: int) -> int:
