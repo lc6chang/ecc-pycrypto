@@ -51,6 +51,8 @@ class Curve(ABC):
         https://en.wikipedia.org/wiki/Elliptic_curve_point_multiplication
         """
         res = None
+        is_negative_scalar = d < 0
+        d = -d if is_negative_scalar else d
         tmp = P
         while d:
             if d & 0x1 == 1:
@@ -60,7 +62,10 @@ class Curve(ABC):
                     res = tmp
             tmp = self.double_point(tmp)
             d >>= 1
-        return res
+        if is_negative_scalar:
+            return -res
+        else:
+            return res
 
     @abstractmethod
     def compute_y(self, x: int) -> int:
