@@ -19,7 +19,13 @@ class Curve:
 
     def __repr__(self):
         return self.name
-    
+
+    def __eq__(self, other):
+        return (
+            self.a == other.a and self.b == other.b and self.p == other.p and
+            self.n == other.n and self.gx == other.gx and self.gy == other.gy
+        )
+
     @abstractmethod
     def is_on_curve(self, p):
         pass
@@ -155,7 +161,7 @@ class Point:
         return self.__str__()
 
     def __eq__(self, other):
-        return self.x == other.x and self.y == other.y and self.curve is other.curve
+        return self.x == other.x and self.y == other.y and self.curve == other.curve
 
     def __neg__(self):
         return Point(self.x, -self.y % self.curve.p, self.curve)
