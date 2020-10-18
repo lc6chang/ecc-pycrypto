@@ -1,7 +1,8 @@
 import random
 from os import urandom
-from typing import Callable
+from typing import Callable, Tuple
 from dataclasses import dataclass
+
 from ecc.curve import Curve, Point
 
 
@@ -9,10 +10,11 @@ from ecc.curve import Curve, Point
 class ElGamal:
     curve: Curve
 
-    def encrypt(self, plaintext: bytes, public_key: Point, randfunc: Callable =None):
+    def encrypt(self, plaintext: bytes, public_key: Point,
+                randfunc: Callable = None) -> Tuple[Point, Point]:
         randfunc = randfunc or urandom
         # Base point
-        G = Point(self.curve.gx, self.curve.gy, curve=self.curve)
+        G = self.curve.G
         # Encode plaintext into curve point
         M = self.curve.encode_point(plaintext)
 
@@ -23,6 +25,6 @@ class ElGamal:
         C2 = M + k * public_key
         return C1, C2
 
-    def decrypt(self, private_key, C1, C2):
+    def decrypt(self, private_key: int, C1: Point, C2: Point):
         M = C2 + (self.curve.n - private_key) * C1
         return self.curve.decode_point(M)

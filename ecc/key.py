@@ -2,18 +2,21 @@
 
 from binascii import hexlify
 from os import urandom
+from typing import Callable, Tuple
 
-from ecc.curve import Point
+from ecc.curve import Curve, Point
 
 
-def gen_keypair(curve, randfunc=None):
+def gen_keypair(curve: Curve,
+                randfunc: Callable = None) -> Tuple[int, Point]:
     randfunc = randfunc or urandom
     private_key = gen_private_key(curve, randfunc)
     public_key = get_public_key(private_key, curve)
     return private_key, public_key
 
 
-def gen_private_key(curve, randfunc):
+def gen_private_key(curve: Curve,
+                    randfunc: Callable = None) -> int:
     order_bits = 0
     order = curve.n
 
@@ -34,5 +37,5 @@ def gen_private_key(curve, randfunc):
     return rand
 
 
-def get_public_key(d, curve):
-    return d * Point(curve.gx, curve.gy, curve)
+def get_public_key(d: int, curve: Curve) -> Point:
+    return d * curve.G
