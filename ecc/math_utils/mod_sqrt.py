@@ -32,8 +32,10 @@ def modsqrt(a, p):
     s = p - 1
     e = 0
     while s % 2 == 0:
-        s /= 2
-        s = int(s)
+        # Interesting bug. s /= 2 and s = int(s) not equals to s //= 2
+        # s /= 2
+        # s = int(s)
+        s //= 2
         e += 1
 
     # Find some 'n' with a legendre symbol n|p = -1.
