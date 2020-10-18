@@ -30,7 +30,7 @@ pip3 install .
 ### ElGamal elliptic curve encryption and decryption
 
 ```python
-from ecc.curve import P256
+from ecc.curve import Curve25519
 from ecc.key import gen_keypair
 from ecc.cipher import ElGamal
 
@@ -75,8 +75,8 @@ YOUR_CURVE = ShortWeierstrassCurve(
   b=B,
   p=P,
   n=N,
-  gx=G_X,
-  gy=G_Y
+  G_x=G_X,
+  G_y=G_Y
 )
 ```
 
