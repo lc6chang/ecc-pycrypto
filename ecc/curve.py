@@ -101,7 +101,7 @@ class Curve(ABC):
             return P
 
         if P == Q:
-            return self.double_point(P)
+            return self._double_point(P)
         return self._add_point(P, Q)
 
     @abstractmethod
