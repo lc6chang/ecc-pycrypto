@@ -1,4 +1,4 @@
-from ecc.curve import P256, Curve25519, Point
+from ecc.curve import Curve25519
 from ecc.key import gen_keypair
 from ecc.cipher import ElGamal
 
