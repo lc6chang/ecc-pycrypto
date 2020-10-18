@@ -18,19 +18,23 @@ class Point:
             raise ValueError("The point is not on the curve.")
 
     def __str__(self):
-        return f"X: {self.x}\nY: {self.y}\nCurve: {str(self.curve)}"
+        return f"Point(X={self.x}, Y={self.y}, Curve={str(self.curve)})"
 
     def __repr__(self):
         return self.__str__()
 
     def __eq__(self, other):
+        assert isinstance(other, Point)
         return self.curve == other.curve and self.x == other.x and self.y == other.y
 
     def __neg__(self):
         return Point(self.x, -self.y % self.curve.p, self.curve)
 
     def __add__(self, other):
-        if self == other:
+        assert isinstance(other, Point)
+        if other.curve != self.curve:
+            raise ValueError("Two points must be on the same curve.")
+        if other == self:
             return self.curve.double_point(other)
         return self.curve.add_point(self, other)
 
@@ -41,10 +45,11 @@ class Point:
         negative = - other
         return self.__add__(negative)
 
-    def __mul__(self, scalar):
+    def __mul__(self, scalar: int):
+        assert isinstance(scalar, int)
         return self.curve.mul_point(scalar, self)
 
-    def __rmul__(self, scalar):
+    def __rmul__(self, scalar: int):
         return self.__mul__(scalar)
 
 
