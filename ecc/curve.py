@@ -241,6 +241,48 @@ class MontgomeryCurve(Curve):
         return y
 
 
+class TwistedEdwardsCurve(Curve):
+    """
+    ax^2 + y^2 = 1 + bx^2y^2
+    https://en.wikipedia.org/wiki/Twisted_Edwards_curve
+    """
+    def _is_on_curve(self, P: Point) -> bool:
+        left = self.a * P.x * P.x + P.y * P.y
+        right = 1 + self.b * P.x * P.x * P.y * P.y
+        return (left - right) % self.p == 0
+
+    def _add_point(self, P: Point, Q: Point) -> Point:
+        # Compute x
+        up_x = P.x * Q.y + P.y * Q.x
+        down_x = 1 + self.b * P.x * Q.x * P.y * Q.y
+        res_x = (up_x * modinv(down_x, self.p)) % self.p
+        # Compute y
+        up_y = P.y * Q.y - self.a * P.x * Q.x
+        down_y = 1 - self.b * P.x * Q.x * P.y * Q.y
+        res_y = (up_y * modinv(down_y, self.p)) % self.p
+        return Point(res_x, res_y, self)
+
+    def _double_point(self, P: Point) -> Point:
+        # Compute x
+        up_x = 2 * P.x * P.y
+        down_x = self.a * P.x * P.x + P.y * P.y
+        res_x = (up_x * modinv(down_x, self.p)) % self.p
+        # Compute y
+        up_y = P.y * P.y - self.a * P.x * P.x
+        down_y = 2 - self.a * P.x * P.x - P.y * P.y
+        res_y = (up_y * modinv(down_y, self.p)) % self.p
+        return Point(res_x, res_y, self)
+
+    def compute_y(self, x: int) -> int:
+        # (bx^2 - 1) * y^2 = ax^2 - 1
+        right = self.a * x * x - 1
+        left_scale = (self.b * x * x - 1) % self.p
+        inv_scale = modinv(left_scale, self.p)
+        right = (right * inv_scale) % self.p
+        y = modsqrt(right, self.p)
+        return y
+
+
 P256 = ShortWeierstrassCurve(
     name="P256",
     a=-3,
