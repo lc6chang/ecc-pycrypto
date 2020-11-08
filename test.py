@@ -1,12 +1,12 @@
-from ecc.curve import Curve25519
+from ecc.curve import E382
 from ecc.key import gen_keypair
 from ecc.cipher import ElGamal
 
 plain_text = b"This-is-test-plaintext"
 
-pri_key, pub_key = gen_keypair(Curve25519)
+pri_key, pub_key = gen_keypair(E382)
 
-cipher_elg = ElGamal(Curve25519)
+cipher_elg = ElGamal(E382)
 
 C1, C2 = cipher_elg.encrypt(plain_text, pub_key)
 

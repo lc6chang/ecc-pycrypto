@@ -322,3 +322,23 @@ M383 = MontgomeryCurve(
     G_x=0xc,
     G_y=0x1ec7ed04aaf834af310e304b2da0f328e7c165f0e8988abd3992861290f617aa1f1b2e7d0b6e332e969991b62555e77e
 )
+
+E222 = TwistedEdwardsCurve(
+    name="E222",
+    a=1,
+    b=160102,
+    p=0x3fffffffffffffffffffffffffffffffffffffffffffffffffffff8b,
+    n=0xffffffffffffffffffffffffffff70cbc95e932f802f31423598cbf,
+    G_x=0x19b12bb156a389e55c9768c303316d07c23adab3736eb2bc3eb54e51,
+    G_y=0x1c
+)
+
+E382 = TwistedEdwardsCurve(
+    name="E382",
+    a=1,
+    b=-67254,
+    p=0x3fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff97,
+    n=0xfffffffffffffffffffffffffffffffffffffffffffffffd5fb21f21e95eee17c5e69281b102d2773e27e13fd3c9719,
+    G_x=0x196f8dd0eab20391e5f05be96e8d20ae68f840032b0b64352923bab85364841193517dbce8105398ebc0cc9470f79603,
+    G_y=0x11
+)
