@@ -241,6 +241,48 @@ class MontgomeryCurve(Curve):
         return y
 
 
+class TwistedEdwardsCurve(Curve):
+    """
+    ax^2 + y^2 = 1 + bx^2y^2
+    https://en.wikipedia.org/wiki/Twisted_Edwards_curve
+    """
+    def _is_on_curve(self, P: Point) -> bool:
+        left = self.a * P.x * P.x + P.y * P.y
+        right = 1 + self.b * P.x * P.x * P.y * P.y
+        return (left - right) % self.p == 0
+
+    def _add_point(self, P: Point, Q: Point) -> Point:
+        # Compute x
+        up_x = P.x * Q.y + P.y * Q.x
+        down_x = 1 + self.b * P.x * Q.x * P.y * Q.y
+        res_x = (up_x * modinv(down_x, self.p)) % self.p
+        # Compute y
+        up_y = P.y * Q.y - self.a * P.x * Q.x
+        down_y = 1 - self.b * P.x * Q.x * P.y * Q.y
+        res_y = (up_y * modinv(down_y, self.p)) % self.p
+        return Point(res_x, res_y, self)
+
+    def _double_point(self, P: Point) -> Point:
+        # Compute x
+        up_x = 2 * P.x * P.y
+        down_x = self.a * P.x * P.x + P.y * P.y
+        res_x = (up_x * modinv(down_x, self.p)) % self.p
+        # Compute y
+        up_y = P.y * P.y - self.a * P.x * P.x
+        down_y = 2 - self.a * P.x * P.x - P.y * P.y
+        res_y = (up_y * modinv(down_y, self.p)) % self.p
+        return Point(res_x, res_y, self)
+
+    def compute_y(self, x: int) -> int:
+        # (bx^2 - 1) * y^2 = ax^2 - 1
+        right = self.a * x * x - 1
+        left_scale = (self.b * x * x - 1) % self.p
+        inv_scale = modinv(left_scale, self.p)
+        right = (right * inv_scale) % self.p
+        y = modsqrt(right, self.p)
+        return y
+
+
 P256 = ShortWeierstrassCurve(
     name="P256",
     a=-3,
@@ -279,4 +321,24 @@ M383 = MontgomeryCurve(
     n=0x10000000000000000000000000000000000000000000000006c79673ac36ba6e7a32576f7b1b249e46bbc225be9071d7,
     G_x=0xc,
     G_y=0x1ec7ed04aaf834af310e304b2da0f328e7c165f0e8988abd3992861290f617aa1f1b2e7d0b6e332e969991b62555e77e
+)
+
+E222 = TwistedEdwardsCurve(
+    name="E222",
+    a=1,
+    b=160102,
+    p=0x3fffffffffffffffffffffffffffffffffffffffffffffffffffff8b,
+    n=0xffffffffffffffffffffffffffff70cbc95e932f802f31423598cbf,
+    G_x=0x19b12bb156a389e55c9768c303316d07c23adab3736eb2bc3eb54e51,
+    G_y=0x1c
+)
+
+E382 = TwistedEdwardsCurve(
+    name="E382",
+    a=1,
+    b=-67254,
+    p=0x3fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff97,
+    n=0xfffffffffffffffffffffffffffffffffffffffffffffffd5fb21f21e95eee17c5e69281b102d2773e27e13fd3c9719,
+    G_x=0x196f8dd0eab20391e5f05be96e8d20ae68f840032b0b64352923bab85364841193517dbce8105398ebc0cc9470f79603,
+    G_y=0x11
 )
