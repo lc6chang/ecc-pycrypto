@@ -102,6 +102,9 @@ class Curve(ABC):
 
         if P == Q:
             return self._double_point(P)
+        if P == -Q:
+            return self.INF
+
         return self._add_point(P, Q)
 
     @abstractmethod
@@ -128,6 +131,8 @@ class Curve(ABC):
             raise ValueError("The point is not on the curve.")
         if P.is_at_infinity():
             return P
+        if d == 0:
+            return self.INF
 
         res = None
         is_negative_scalar = d < 0
@@ -272,6 +277,14 @@ class TwistedEdwardsCurve(Curve):
         down_y = 2 - self.a * P.x * P.x - P.y * P.y
         res_y = (up_y * modinv(down_y, self.p)) % self.p
         return Point(res_x, res_y, self)
+
+    def neg_point(self, P: Point) -> Point:
+        if not self.is_on_curve(P):
+            raise ValueError("The point is not on the curve.")
+        if P.is_at_infinity():
+            return P
+
+        return Point(-P.x % self.p, P.y, self)
 
     def compute_y(self, x: int) -> int:
         # (bx^2 - 1) * y^2 = ax^2 - 1
