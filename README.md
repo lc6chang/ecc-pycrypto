@@ -57,6 +57,7 @@ new_plaintext = cipher_elg.decrypt(pri_key, C1, C2)
 ```python
 from ecc.curve import P256, Point
 
+# Common point
 P = Point(0x9d8b7f25322574b60f9914b240d79bf35ba7284d0c93a0b76acac49b931cbde6,
           0x2aae8628ed337a97cecead2e61d0c188a979a4d1383382a3696b29b449072069,
           P256)
