@@ -115,7 +115,7 @@ class Curve(ABC):
         if not self.is_on_curve(P):
             raise ValueError("The point is not on the curve.")
         if P.is_at_infinity():
-            return P
+            return self.INF
 
         return self._double_point(P)
 
@@ -130,7 +130,7 @@ class Curve(ABC):
         if not self.is_on_curve(P):
             raise ValueError("The point is not on the curve.")
         if P.is_at_infinity():
-            return P
+            return self.INF
         if d == 0:
             return self.INF
 
@@ -155,7 +155,7 @@ class Curve(ABC):
         if not self.is_on_curve(P):
             raise ValueError("The point is not on the curve.")
         if P.is_at_infinity():
-            return P
+            return self.INF
 
         return self._neg_point(P)
 
