@@ -157,7 +157,11 @@ class Curve(ABC):
         if P.is_at_infinity():
             return P
 
-        return Point(P.x, -P.y % self.p, self)
+        return self._neg_point(P)
+
+    @abstractmethod
+    def _neg_point(self, P: Point) -> Point:
+        pass
 
     @abstractmethod
     def compute_y(self, x: int) -> int:
@@ -205,6 +209,9 @@ class ShortWeierstrassCurve(Curve):
         res_y = (P.y + s * (res_x - P.x)) % self.p
         return - Point(res_x, res_y, self)
 
+    def _neg_point(self, P: Point) -> Point:
+        return Point(P.x, -P.y % self.p, self)
+
     def compute_y(self, x) -> int:
         right = (x * x * x + self.a * x + self.b) % self.p
         y = modsqrt(right, self.p)
@@ -237,6 +244,9 @@ class MontgomeryCurve(Curve):
         res_x = (self.b * s * s - self.a - 2 * P.x) % self.p
         res_y = (P.y + s * (res_x - P.x)) % self.p
         return - Point(res_x, res_y, self)
+
+    def _neg_point(self, P: Point) -> Point:
+        return Point(P.x, -P.y % self.p, self)
 
     def compute_y(self, x: int) -> int:
         right = (x * x * x + self.a * x * x + x) % self.p
@@ -278,12 +288,7 @@ class TwistedEdwardsCurve(Curve):
         res_y = (up_y * modinv(down_y, self.p)) % self.p
         return Point(res_x, res_y, self)
 
-    def neg_point(self, P: Point) -> Point:
-        if not self.is_on_curve(P):
-            raise ValueError("The point is not on the curve.")
-        if P.is_at_infinity():
-            return P
-
+    def _neg_point(self, P: Point) -> Point:
         return Point(-P.x % self.p, P.y, self)
 
     def compute_y(self, x: int) -> int:
