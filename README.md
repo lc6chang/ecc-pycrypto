@@ -25,6 +25,12 @@ cd ecc-pycrypto
 pip3 install .
 ```
 
+## Test
+
+```bash
+python3 -m unittest discover tests
+```
+
 ## Usages
 
 ### ElGamal elliptic curve encryption and decryption
@@ -36,7 +42,7 @@ from ecc.cipher import ElGamal
 
 
 # Plaintext
-plain_text = b'This-is-test-plaintext'
+plain_text = b"This-is-test-plaintext"
 # Generate key pair
 pri_key, pub_key = gen_keypair(Curve25519)
 # Encrypt using ElGamal algorithm
