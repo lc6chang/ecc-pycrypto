@@ -115,7 +115,7 @@ class Curve(ABC):
         if not self.is_on_curve(P):
             raise ValueError("The point is not on the curve.")
         if P.is_at_infinity():
-            return P
+            return self.INF
 
         return self._double_point(P)
 
@@ -130,7 +130,7 @@ class Curve(ABC):
         if not self.is_on_curve(P):
             raise ValueError("The point is not on the curve.")
         if P.is_at_infinity():
-            return P
+            return self.INF
         if d == 0:
             return self.INF
 
@@ -155,9 +155,13 @@ class Curve(ABC):
         if not self.is_on_curve(P):
             raise ValueError("The point is not on the curve.")
         if P.is_at_infinity():
-            return P
+            return self.INF
 
-        return Point(P.x, -P.y % self.p, self)
+        return self._neg_point(P)
+
+    @abstractmethod
+    def _neg_point(self, P: Point) -> Point:
+        pass
 
     @abstractmethod
     def compute_y(self, x: int) -> int:
@@ -192,6 +196,9 @@ class ShortWeierstrassCurve(Curve):
         return (left - right) % self.p == 0
 
     def _add_point(self, P: Point, Q: Point) -> Point:
+        # s = (yP - yQ) / (xP - xQ)
+        # xR = s^2 - xP - xQ
+        # yR = yP + s * (xR - xP)
         delta_x = P.x - Q.x
         delta_y = P.y - Q.y
         s = delta_y * modinv(delta_x, self.p)
@@ -200,10 +207,16 @@ class ShortWeierstrassCurve(Curve):
         return - Point(res_x, res_y, self)
 
     def _double_point(self, P: Point) -> Point:
+        # s = (3 * xP^2 + a) / (2 * yP)
+        # xR = s^2 - 2 * xP
+        # yR = yP + s * (xR - xP)
         s = (3 * P.x * P.x + self.a) * modinv(2 * P.y, self.p)
         res_x = (s * s - 2 * P.x) % self.p
         res_y = (P.y + s * (res_x - P.x)) % self.p
         return - Point(res_x, res_y, self)
+
+    def _neg_point(self, P: Point) -> Point:
+        return Point(P.x, -P.y % self.p, self)
 
     def compute_y(self, x) -> int:
         right = (x * x * x + self.a * x + self.b) % self.p
@@ -223,6 +236,9 @@ class MontgomeryCurve(Curve):
         return (left - right) % self.p == 0
 
     def _add_point(self, P: Point, Q: Point) -> Point:
+        # s = (yP - yQ) / (xP - xQ)
+        # xR = b * s^2 - a - xP - xQ
+        # yR = yP + s * (xR - xP)
         delta_x = P.x - Q.x
         delta_y = P.y - Q.y
         s = delta_y * modinv(delta_x, self.p)
@@ -231,12 +247,18 @@ class MontgomeryCurve(Curve):
         return - Point(res_x, res_y, self)
 
     def _double_point(self, P: Point) -> Point:
+        # s = (3 * xP^2 + 2 * a * xP + 1) / (2 * b * yP)
+        # xR = b * s^2 - a - 2 * xP
+        # yR = yP + s * (xR - xP)
         up = 3 * P.x * P.x + 2 * self.a * P.x + 1
         down = 2 * self.b * P.y
         s = up * modinv(down, self.p)
         res_x = (self.b * s * s - self.a - 2 * P.x) % self.p
         res_y = (P.y + s * (res_x - P.x)) % self.p
         return - Point(res_x, res_y, self)
+
+    def _neg_point(self, P: Point) -> Point:
+        return Point(P.x, -P.y % self.p, self)
 
     def compute_y(self, x: int) -> int:
         right = (x * x * x + self.a * x * x + x) % self.p
@@ -257,33 +279,28 @@ class TwistedEdwardsCurve(Curve):
         return (left - right) % self.p == 0
 
     def _add_point(self, P: Point, Q: Point) -> Point:
-        # Compute x
+        # xR = (xP * yQ + yP * xQ) / (1 + b * xP * xQ * yP * yQ)
         up_x = P.x * Q.y + P.y * Q.x
         down_x = 1 + self.b * P.x * Q.x * P.y * Q.y
         res_x = (up_x * modinv(down_x, self.p)) % self.p
-        # Compute y
+        # yR = (yP * yQ - a * xP * xQ) / (1 - b * xP * xQ * yP * yQ)
         up_y = P.y * Q.y - self.a * P.x * Q.x
         down_y = 1 - self.b * P.x * Q.x * P.y * Q.y
         res_y = (up_y * modinv(down_y, self.p)) % self.p
         return Point(res_x, res_y, self)
 
     def _double_point(self, P: Point) -> Point:
-        # Compute x
+        # xR = (2 * xP * yP) / (a * xP^2 + yP^2)
         up_x = 2 * P.x * P.y
         down_x = self.a * P.x * P.x + P.y * P.y
         res_x = (up_x * modinv(down_x, self.p)) % self.p
-        # Compute y
+        # yR = (yP^2 - a * xP * xP) / (2 - a * xP^2 - yP^2)
         up_y = P.y * P.y - self.a * P.x * P.x
         down_y = 2 - self.a * P.x * P.x - P.y * P.y
         res_y = (up_y * modinv(down_y, self.p)) % self.p
         return Point(res_x, res_y, self)
 
-    def neg_point(self, P: Point) -> Point:
-        if not self.is_on_curve(P):
-            raise ValueError("The point is not on the curve.")
-        if P.is_at_infinity():
-            return P
-
+    def _neg_point(self, P: Point) -> Point:
         return Point(-P.x % self.p, P.y, self)
 
     def compute_y(self, x: int) -> int:
@@ -300,20 +317,20 @@ P256 = ShortWeierstrassCurve(
     name="P256",
     a=-3,
     b=41058363725152142129326129780047268409114441015993725554835256314039467401291,
-    p=115792089210356248762697446949407573530086143415290314195533631308867097853951,
-    n=115792089210356248762697446949407573529996955224135760342422259061068512044369,
-    G_x=48439561293906451759052585252797914202762949526041747995844080717082404635286,
-    G_y=36134250956749795798585127919587881956611106672985015071877198253568414405109
+    p=0xffffffff00000001000000000000000000000000ffffffffffffffffffffffff,
+    n=0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551,
+    G_x=0x6b17d1f2e12c4247f8bce6e563a440f277037d812deb33a0f4a13945d898c296,
+    G_y=0x4fe342e2fe1a7f9b8ee7eb4a7c0f9e162bce33576b315ececbb6406837bf51f5
 )
 
 secp256k1 = ShortWeierstrassCurve(
     name="secp256k1",
-    a=0x0,
-    b=0x7,
-    p=0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F,
-    n=0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141,
-    G_x=0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798,
-    G_y=0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8
+    a=0,
+    b=7,
+    p=0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f,
+    n=0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141,
+    G_x=0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798,
+    G_y=0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8
 )
 
 Curve25519 = MontgomeryCurve(
@@ -321,7 +338,7 @@ Curve25519 = MontgomeryCurve(
     a=486662,
     b=1,
     p=0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffed,
-    n=0x1000000000000000000000000000000014DEF9DEA2F79CD65812631A5CF5D3ED,
+    n=0x1000000000000000000000000000000014def9dea2f79cd65812631a5cf5d3ed,
     G_x=0x9,
     G_y=0x20ae19a1b8a086b4e01edd2c7748d14c923d4d7e6d7c61b229e9c5a27eced3d9
 )
