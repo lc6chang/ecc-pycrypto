@@ -209,7 +209,7 @@ class ShortWeierstrassCurve(Curve):
     def _double_point(self, P: Point) -> Point:
         # s = (3 * xP^2 + a) / (2 * yP)
         # xR = s^2 - 2 * xP
-        # yR = yP + s * (xR -xP)
+        # yR = yP + s * (xR - xP)
         s = (3 * P.x * P.x + self.a) * modinv(2 * P.y, self.p)
         res_x = (s * s - 2 * P.x) % self.p
         res_y = (P.y + s * (res_x - P.x)) % self.p
