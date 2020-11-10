@@ -196,6 +196,9 @@ class ShortWeierstrassCurve(Curve):
         return (left - right) % self.p == 0
 
     def _add_point(self, P: Point, Q: Point) -> Point:
+        # s = (yP - yQ) / (xP - xQ)
+        # xR = s^2 - xP - xQ
+        # yR = yP + s * (xR - xP)
         delta_x = P.x - Q.x
         delta_y = P.y - Q.y
         s = delta_y * modinv(delta_x, self.p)
@@ -204,6 +207,9 @@ class ShortWeierstrassCurve(Curve):
         return - Point(res_x, res_y, self)
 
     def _double_point(self, P: Point) -> Point:
+        # s = (3 * xP^2 + a) / (2 * yP)
+        # xR = s^2 - 2 * xP
+        # yR = yP + s * (xR -xP)
         s = (3 * P.x * P.x + self.a) * modinv(2 * P.y, self.p)
         res_x = (s * s - 2 * P.x) % self.p
         res_y = (P.y + s * (res_x - P.x)) % self.p
@@ -230,6 +236,9 @@ class MontgomeryCurve(Curve):
         return (left - right) % self.p == 0
 
     def _add_point(self, P: Point, Q: Point) -> Point:
+        # s = (yP - yQ) / (xP - xQ)
+        # xR = b * s^2 - a - xP - xQ
+        # yR = yP + s * (xR - xP)
         delta_x = P.x - Q.x
         delta_y = P.y - Q.y
         s = delta_y * modinv(delta_x, self.p)
@@ -238,6 +247,9 @@ class MontgomeryCurve(Curve):
         return - Point(res_x, res_y, self)
 
     def _double_point(self, P: Point) -> Point:
+        # s = (3 * xP^2 + 2 * a * xP + 1) / (2 * b * yP)
+        # xR = b * s^2 - a - 2 * xP
+        # yR = yP + s * (xR - xP)
         up = 3 * P.x * P.x + 2 * self.a * P.x + 1
         down = 2 * self.b * P.y
         s = up * modinv(down, self.p)
@@ -267,22 +279,22 @@ class TwistedEdwardsCurve(Curve):
         return (left - right) % self.p == 0
 
     def _add_point(self, P: Point, Q: Point) -> Point:
-        # Compute x
+        # xR = (xP * yQ + yP * xQ) / (1 + b * xP * xQ * yP * yQ)
         up_x = P.x * Q.y + P.y * Q.x
         down_x = 1 + self.b * P.x * Q.x * P.y * Q.y
         res_x = (up_x * modinv(down_x, self.p)) % self.p
-        # Compute y
+        # yR = (yP * yQ - a * xP * xQ) / (1 - b * xP * xQ * yP * yQ)
         up_y = P.y * Q.y - self.a * P.x * Q.x
         down_y = 1 - self.b * P.x * Q.x * P.y * Q.y
         res_y = (up_y * modinv(down_y, self.p)) % self.p
         return Point(res_x, res_y, self)
 
     def _double_point(self, P: Point) -> Point:
-        # Compute x
+        # xR = (2 * xP * yP) / (a * xP^2 + yP^2)
         up_x = 2 * P.x * P.y
         down_x = self.a * P.x * P.x + P.y * P.y
         res_x = (up_x * modinv(down_x, self.p)) % self.p
-        # Compute y
+        # yR = (yP^2 - a * xP * xP) / (2 - a * xP^2 - yP^2)
         up_y = P.y * P.y - self.a * P.x * P.x
         down_y = 2 - self.a * P.x * P.x - P.y * P.y
         res_y = (up_y * modinv(down_y, self.p)) % self.p
