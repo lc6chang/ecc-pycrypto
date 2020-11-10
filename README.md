@@ -20,15 +20,15 @@ Some cons: The operations of curve points are just implemented in a common way. 
 ## Installation
 
 ```bash
-git clone git@github.com:lc6chang/ecc-pycrypto.git
-cd ecc-pycrypto
-pip3 install .
+$ git clone git@github.com:lc6chang/ecc-pycrypto.git
+$ cd ecc-pycrypto
+$ pip3 install .
 ```
 
 ## Test
 
 ```bash
-python3 -m unittest discover tests
+$ python3 -m unittest discover tests
 ```
 
 ## Usages
@@ -60,15 +60,17 @@ from ecc.curve import P256, Point
 P = Point(0x9d8b7f25322574b60f9914b240d79bf35ba7284d0c93a0b76acac49b931cbde6,
           0x2aae8628ed337a97cecead2e61d0c188a979a4d1383382a3696b29b449072069,
           P256)
+# Base point
+G = P256.G
+# Point at infinity
+INF = P256.INF
 
-Q = Point(0x214735e43acb4530348f31bf1d4e5444711c9d9dba9ca30389fd68573c3db138,
-          0xdc029894c4b8060fa951d2a7b052c88bf72218b265b2e2c04458ac187cede004,
-          P256)
+assert P + INF == P
+assert G - G == INF
+assert 100 * INF == INF
 
-P + Q
-P + P
-3 * P
-Q * 1000 + P
+print(P + G)
+print(20 * P - 5 * G)
 ```
 
 ```python
