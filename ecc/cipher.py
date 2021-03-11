@@ -28,3 +28,21 @@ class ElGamal:
     def decrypt(self, private_key: int, C1: Point, C2: Point):
         M = C2 + (self.curve.n - private_key) * C1
         return self.curve.decode_point(M)
+
+    def encrypt_raw(self, plaintext: Point, public_key: Point,
+                    randfunc: Callable = None) -> Tuple[Point, Point]:
+        randfunc = randfunc or urandom
+        # Base point
+        G = self.curve.G
+        M = plaintext
+
+        random.seed(randfunc(1024))
+        k = random.randint(1, self.curve.n)
+
+        C1 = k * G
+        C2 = M + k * public_key
+        return C1, C2
+
+    def decrypt_raw(self, private_key: int, C1: Point, C2: Point):
+        M = C2 + (self.curve.n - private_key) * C1
+        return M
