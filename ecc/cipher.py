@@ -24,7 +24,7 @@ class ElGamal:
         return self.encrypt_point(M, public_key, randfunc)
 
     def decrypt_bytes(self, private_key: int, C1: Point, C2: Point) -> bytes:
-        M = C2 + (self.curve.n - private_key) * C1
+        M = self.decrypt_point(private_key, C1, C2)
         return self.curve.decode_point(M)
 
     def encrypt_point(self, plaintext: Point, public_key: Point,
