@@ -13,7 +13,7 @@ This is a Python package for ECC and ElGamal elliptic curve encryption.
 
 ## Warning
 
-This project only aims to help you learn and understand what is ECC and how the algorithm works. **Do not use it directly in production environment!**
+This project only aims to help you learn and understand what is ECC and how the algorithm works. **Do not use it directly in the production environment!**
 
 Some cons: The operations of curve points are just implemented in a common way. We don't implement them using [Jacobian Coordinates](https://en.wikibooks.org/wiki/Cryptography/Prime_Curve/Jacobian_Coordinates). Also, we implement them in pure Python. It will be slower than C.
 
@@ -42,14 +42,17 @@ from ecc.cipher import ElGamal
 
 
 # Plaintext
-plain_text = b"This-is-test-plaintext"
+plaintext = b"I am plaintext."
 # Generate key pair
 pri_key, pub_key = gen_keypair(Curve25519)
 # Encrypt using ElGamal algorithm
 cipher_elg = ElGamal(Curve25519)
-C1, C2 = cipher_elg.encrypt(plain_text, pub_key)
+C1, C2 = cipher_elg.encrypt(plaintext, pub_key)
 # Decrypt
 new_plaintext = cipher_elg.decrypt(pri_key, C1, C2)
+
+print(new_plaintext == plaintext)
+# >> True
 ```
 
 ## Common elliptic curve
