@@ -8,7 +8,7 @@ from ecc.key import gen_keypair
 
 
 CURVES = [P256, secp256k1, Curve25519, M383, E222, E382]
-PLAIN_TEXT = b"This is a plain text."
+PLAINTEXT = b"I am plaintext."
 
 
 class ElGamalTestCase(unittest.TestCase):
@@ -17,6 +17,18 @@ class ElGamalTestCase(unittest.TestCase):
             with self.subTest(curve=curve):
                 pri_key, pub_key = gen_keypair(curve)
                 cipher_elg = ElGamal(curve)
-                C1, C2 = cipher_elg.encrypt(PLAIN_TEXT, pub_key)
-                plain_text = cipher_elg.decrypt(pri_key, C1, C2)
-                self.assertEqual(plain_text, PLAIN_TEXT)
+                C1, C2 = cipher_elg.encrypt(PLAINTEXT, pub_key)
+                plaintext = cipher_elg.decrypt(pri_key, C1, C2)
+                self.assertEqual(plaintext, PLAINTEXT)
+
+    def test_additive_homomorphism_encryption(self):
+        for curve in CURVES:
+            with self.subTest(curve=curve):
+                pri_key, pub_key = gen_keypair(curve)
+                cipher_elg = ElGamal(curve)
+                plaintext1 = curve.G * 123
+                plaintext2 = curve.G * 456
+                C1, C2 = cipher_elg.encrypt_point(plaintext1, pub_key)
+                C3, C4 = cipher_elg.encrypt_point(plaintext2, pub_key)
+                plaintext = cipher_elg.decrypt_point(pri_key, C1 + C3, C2 + C4)
+                self.assertEqual(plaintext, plaintext1 + plaintext2)
