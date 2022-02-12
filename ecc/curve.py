@@ -100,24 +100,16 @@ class Curve(ABC):
         elif Q.is_at_infinity():
             return P
 
-        if P == Q:
-            return self._double_point(P)
         if P == -Q:
             return self.INF
+        if P == Q:
+            return self._double_point(P)
 
         return self._add_point(P, Q)
 
     @abstractmethod
     def _add_point(self, P: Point, Q: Point) -> Point:
         pass
-
-    def double_point(self, P: Point) -> Point:
-        if not self.is_on_curve(P):
-            raise ValueError("The point is not on the curve.")
-        if P.is_at_infinity():
-            return self.INF
-
-        return self._double_point(P)
 
     @abstractmethod
     def _double_point(self, P: Point) -> Point:
@@ -134,17 +126,14 @@ class Curve(ABC):
         if d == 0:
             return self.INF
 
-        res = None
+        res = self.INF
         is_negative_scalar = d < 0
         d = -d if is_negative_scalar else d
         tmp = P
         while d:
             if d & 0x1 == 1:
-                if res:
-                    res = self.add_point(res, tmp)
-                else:
-                    res = tmp
-            tmp = self.double_point(tmp)
+                res = self.add_point(res, tmp)
+            tmp = self.add_point(tmp, tmp)
             d >>= 1
         if is_negative_scalar:
             return -res
