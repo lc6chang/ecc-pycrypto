@@ -1,7 +1,7 @@
 import unittest
 
 from ecc.curve import (
-    P256, secp256k1, Curve25519, M383, E222, E382
+    P256, secp256k1, Curve25519, M383, E222, E382, Point
 )
 
 CURVES = [P256, secp256k1, Curve25519, M383, E222, E382]
@@ -24,3 +24,9 @@ class PointAndCurveTestCase(unittest.TestCase):
                 self.assertEqual(curve.INF + curve.INF, curve.INF)
                 self.assertEqual(0 * P, curve.INF)
                 self.assertEqual(1000 * curve.INF, curve.INF)
+
+    def test_double_points_y_equals_to_0(self):
+        P = Point(x=0, y=0, curve=Curve25519)
+        self.assertEqual(P + P, Curve25519.INF)
+        self.assertEqual(2 * P, Curve25519.INF)
+        self.assertEqual(-2 * P, Curve25519.INF)
