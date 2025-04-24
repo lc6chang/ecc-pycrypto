@@ -23,7 +23,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
-        pip3 install .
+        pip3 install -e .
         pip3 install flake8 mypy
     - name: Run flake8
       run: |
