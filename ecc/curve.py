@@ -1,3 +1,5 @@
+# flake8: noqa
+# TODO: Better flake8 config
 from os import urandom
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
@@ -31,7 +33,11 @@ class Point:
         return self.__str__()
 
     def __eq__(self, other):
-        return self.curve == other.curve and self.x == other.x and self.y == other.y
+        return (
+            self.curve == other.curve and
+            self.x == other.x and
+            self.y == other.y
+        )
 
     def __neg__(self):
         return self.curve.neg_point(self)
@@ -71,8 +77,12 @@ class Curve(ABC):
 
     def __eq__(self, other):
         return (
-            self.a == other.a and self.b == other.b and self.p == other.p and
-            self.n == other.n and self.G_x == other.G_x and self.G_y == other.G_y
+            self.a == other.a and
+            self.b == other.b and
+            self.p == other.p and
+            self.n == other.n and
+            self.G_x == other.G_x and
+            self.G_y == other.G_y
         )
 
     @property
@@ -166,6 +176,7 @@ class Curve(ABC):
             plaintext += urandom(1)
 
     def decode_point(self, M: Point) -> bytes:
+        assert M.x is not None
         byte_len = int_length_in_byte(M.x)
         plaintext_len = (M.x >> ((byte_len - 1) * 8)) & 0xff
         plaintext = ((M.x >> ((byte_len - plaintext_len - 1) * 8))
@@ -180,11 +191,14 @@ class ShortWeierstrassCurve(Curve):
     """
 
     def _is_on_curve(self, P: Point) -> bool:
+        assert P.x is not None and P.y is not None
         left = P.y * P.y
         right = (P.x * P.x * P.x) + (self.a * P.x) + self.b
         return (left - right) % self.p == 0
 
     def _add_point(self, P: Point, Q: Point) -> Point:
+        assert P.x is not None and P.y is not None
+        assert Q.x is not None and Q.y is not None
         # s = (yP - yQ) / (xP - xQ)
         # xR = s^2 - xP - xQ
         # yR = yP + s * (xR - xP)
@@ -196,6 +210,7 @@ class ShortWeierstrassCurve(Curve):
         return - Point(res_x, res_y, self)
 
     def _double_point(self, P: Point) -> Point:
+        assert P.x is not None and P.y is not None
         # s = (3 * xP^2 + a) / (2 * yP)
         # xR = s^2 - 2 * xP
         # yR = yP + s * (xR - xP)
@@ -205,6 +220,7 @@ class ShortWeierstrassCurve(Curve):
         return - Point(res_x, res_y, self)
 
     def _neg_point(self, P: Point) -> Point:
+        assert P.x is not None and P.y is not None
         return Point(P.x, -P.y % self.p, self)
 
     def compute_y(self, x) -> int:
@@ -220,11 +236,14 @@ class MontgomeryCurve(Curve):
     """
 
     def _is_on_curve(self, P: Point) -> bool:
+        assert P.x is not None and P.y is not None
         left = self.b * P.y * P.y
         right = (P.x * P.x * P.x) + (self.a * P.x * P.x) + P.x
         return (left - right) % self.p == 0
 
     def _add_point(self, P: Point, Q: Point) -> Point:
+        assert P.x is not None and P.y is not None
+        assert Q.x is not None and Q.y is not None
         # s = (yP - yQ) / (xP - xQ)
         # xR = b * s^2 - a - xP - xQ
         # yR = yP + s * (xR - xP)
@@ -236,6 +255,7 @@ class MontgomeryCurve(Curve):
         return - Point(res_x, res_y, self)
 
     def _double_point(self, P: Point) -> Point:
+        assert P.x is not None and P.y is not None
         # s = (3 * xP^2 + 2 * a * xP + 1) / (2 * b * yP)
         # xR = b * s^2 - a - 2 * xP
         # yR = yP + s * (xR - xP)
@@ -247,6 +267,7 @@ class MontgomeryCurve(Curve):
         return - Point(res_x, res_y, self)
 
     def _neg_point(self, P: Point) -> Point:
+        assert P.x is not None and P.y is not None
         return Point(P.x, -P.y % self.p, self)
 
     def compute_y(self, x: int) -> int:
@@ -263,11 +284,14 @@ class TwistedEdwardsCurve(Curve):
     https://en.wikipedia.org/wiki/Twisted_Edwards_curve
     """
     def _is_on_curve(self, P: Point) -> bool:
+        assert P.x is not None and P.y is not None
         left = self.a * P.x * P.x + P.y * P.y
         right = 1 + self.b * P.x * P.x * P.y * P.y
         return (left - right) % self.p == 0
 
     def _add_point(self, P: Point, Q: Point) -> Point:
+        assert P.x is not None and P.y is not None
+        assert Q.x is not None and Q.y is not None
         # xR = (xP * yQ + yP * xQ) / (1 + b * xP * xQ * yP * yQ)
         up_x = P.x * Q.y + P.y * Q.x
         down_x = 1 + self.b * P.x * Q.x * P.y * Q.y
@@ -279,6 +303,7 @@ class TwistedEdwardsCurve(Curve):
         return Point(res_x, res_y, self)
 
     def _double_point(self, P: Point) -> Point:
+        assert P.x is not None and P.y is not None
         # xR = (2 * xP * yP) / (a * xP^2 + yP^2)
         up_x = 2 * P.x * P.y
         down_x = self.a * P.x * P.x + P.y * P.y
@@ -290,6 +315,7 @@ class TwistedEdwardsCurve(Curve):
         return Point(res_x, res_y, self)
 
     def _neg_point(self, P: Point) -> Point:
+        assert P.x is not None and P.y is not None
         return Point(-P.x % self.p, P.y, self)
 
     def compute_y(self, x: int) -> int:

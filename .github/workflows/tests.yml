@@ -1,7 +1,7 @@
 # This workflow will install Python dependencies, run tests and lint with a variety of Python versions
 # For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
 
-name: Python package
+name: Lint, Type Check, and Unittest
 
 on:
   push:
@@ -11,21 +11,26 @@ on:
 
 jobs:
   build:
-
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
-        python-version: [3.6, 3.7, 3.8, 3.9]
-
+        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11", "3.12"]
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
-        pip3 install .
+        pip3 install -e .
+        pip3 install flake8 mypy types-setuptools
+    - name: Run flake8
+      run: |
+        flake8 . --max-line-length=88
+    - name: Run mypy
+      run: |
+        mypy .
     - name: Run unittest
       run: |
         python3 -m unittest discover tests
