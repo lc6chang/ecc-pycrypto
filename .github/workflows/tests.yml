@@ -24,7 +24,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip3 install -e .
-        pip3 install flake8 mypy
+        pip3 install flake8 mypy types-setuptools
     - name: Run flake8
       run: |
         flake8 . --max-line-length=88
