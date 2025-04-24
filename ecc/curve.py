@@ -1,3 +1,5 @@
+# flake8: noqa
+# TODO: Better flake8 config
 from os import urandom
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
@@ -31,7 +33,11 @@ class Point:
         return self.__str__()
 
     def __eq__(self, other):
-        return self.curve == other.curve and self.x == other.x and self.y == other.y
+        return (
+            self.curve == other.curve and
+            self.x == other.x and
+            self.y == other.y
+        )
 
     def __neg__(self):
         return self.curve.neg_point(self)
@@ -71,8 +77,12 @@ class Curve(ABC):
 
     def __eq__(self, other):
         return (
-            self.a == other.a and self.b == other.b and self.p == other.p and
-            self.n == other.n and self.G_x == other.G_x and self.G_y == other.G_y
+            self.a == other.a and
+            self.b == other.b and
+            self.p == other.p and
+            self.n == other.n and
+            self.G_x == other.G_x and
+            self.G_y == other.G_y
         )
 
     @property
