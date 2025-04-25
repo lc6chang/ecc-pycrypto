@@ -1,34 +1,39 @@
 import unittest
 
-from ecc.curve import (
-    P256, secp256k1, Curve25519, M383, E222, E382
-)
-from ecc.cipher import ElGamal
-from ecc.key import gen_key_pair
+from ecc import curve
+from ecc import cipher
+from ecc import key
 
 
-CURVES = [P256, secp256k1, Curve25519, M383, E222, E382]
-PLAINTEXT = b"I am plaintext."
+CURVES: list[curve.Curve] = [
+    curve.P256,
+    curve.secp256k1,
+    curve.Curve25519,
+    curve.M383,
+    curve.E222,
+    curve.E382,
+]
+PLAINTEXT_BYTES = b"I am plaintext."
 
 
-class ElGamalTestCase(unittest.TestCase):
+class TestCaseElGamal(unittest.TestCase):
     def test_encrypt_and_decrypt(self):
-        for curve in CURVES:
-            with self.subTest(curve=curve):
-                pri_key, pub_key = gen_key_pair(curve)
-                cipher_elg = ElGamal(curve)
-                C1, C2 = cipher_elg.encrypt(PLAINTEXT, pub_key)
-                plaintext = cipher_elg.decrypt(pri_key, C1, C2)
-                self.assertEqual(plaintext, PLAINTEXT)
+        for curve_ in CURVES:
+            with self.subTest(name=curve_.name):
+                pri_key, pub_key = key.gen_key_pair(curve_)
+                plaintext = curve_.encode_point(PLAINTEXT_BYTES)
+                C1, C2 = cipher.elgamal_encrypt(plaintext, pub_key)
+                plaintext_decrypted = cipher.elgamal_decrypt(pri_key, C1, C2)
+                plaintext_decrypted_bytes = curve_.decode_point(plaintext_decrypted)
+                self.assertEqual(plaintext_decrypted_bytes, PLAINTEXT_BYTES)
 
     def test_additive_homomorphism_encryption(self):
-        for curve in CURVES:
-            with self.subTest(curve=curve):
-                pri_key, pub_key = gen_key_pair(curve)
-                cipher_elg = ElGamal(curve)
-                plaintext1 = curve.G * 123
-                plaintext2 = curve.G * 456
-                C1, C2 = cipher_elg.encrypt_point(plaintext1, pub_key)
-                C3, C4 = cipher_elg.encrypt_point(plaintext2, pub_key)
-                plaintext = cipher_elg.decrypt_point(pri_key, C1 + C3, C2 + C4)
+        for curve_ in CURVES:
+            with self.subTest(name=curve_.name):
+                pri_key, pub_key = key.gen_key_pair(curve_)
+                plaintext1 = curve_.G * 123
+                plaintext2 = curve_.G * 456
+                C1, C2 = cipher.elgamal_encrypt(plaintext1, pub_key)
+                C3, C4 = cipher.elgamal_encrypt(plaintext2, pub_key)
+                plaintext = cipher.elgamal_decrypt(pri_key, C1 + C3, C2 + C4)
                 self.assertEqual(plaintext, plaintext1 + plaintext2)

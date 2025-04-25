@@ -8,7 +8,7 @@ from ecc import utils
 def gen_key_pair(
     curve_: curve.Curve,
     rand_func: typing.Callable[[int], bytes] | None = None,
-) -> typing.Tuple[int, curve.Point]:
+) -> tuple[int, curve.Point]:
     rand_func = rand_func or os.urandom
     private_key = gen_private_key(curve_, rand_func)
     public_key = get_public_key(private_key, curve_)
