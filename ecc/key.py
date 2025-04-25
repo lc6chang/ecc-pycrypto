@@ -2,13 +2,13 @@
 
 from binascii import hexlify
 from os import urandom
-from typing import Callable, Tuple, Optional
+from typing import Callable, Tuple
 
 from ecc.curve import Curve, Point
 
 
 def gen_keypair(curve: Curve,
-                randfunc: Optional[Callable] = None) -> Tuple[int, Point]:
+                randfunc: Callable | None = None) -> Tuple[int, Point]:
     randfunc = randfunc or urandom
     private_key = gen_private_key(curve, randfunc)
     public_key = get_public_key(private_key, curve)

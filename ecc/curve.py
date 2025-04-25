@@ -3,7 +3,6 @@
 from os import urandom
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Optional
 
 from ecc.math_utils.mod_inverse import modinv
 from ecc.math_utils.mod_sqrt import modsqrt
@@ -12,8 +11,8 @@ from ecc.utils import int_length_in_byte
 
 @dataclass
 class Point:
-    x: Optional[int]
-    y: Optional[int]
+    x: int | None
+    y: int | None
     curve: "Curve"
 
     def is_at_infinity(self) -> bool:
