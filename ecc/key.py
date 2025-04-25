@@ -1,41 +1,34 @@
-# Reference to https://github.com/AntonKueltz/fastecdsa
+import os
+import typing
 
-from binascii import hexlify
-from os import urandom
-from typing import Callable, Tuple
-
-from ecc.curve import Curve, Point
+from ecc import curve
+from ecc import utils
 
 
-def gen_keypair(curve: Curve,
-                randfunc: Callable | None = None) -> Tuple[int, Point]:
-    randfunc = randfunc or urandom
-    private_key = gen_private_key(curve, randfunc)
-    public_key = get_public_key(private_key, curve)
+def gen_key_pair(
+    curve_: curve.Curve,
+    rand_func: typing.Callable[[int], bytes] | None = None,
+) -> typing.Tuple[int, curve.Point]:
+    rand_func = rand_func or os.urandom
+    private_key = gen_private_key(curve_, rand_func)
+    public_key = get_public_key(private_key, curve_)
     return private_key, public_key
 
 
-def gen_private_key(curve: Curve,
-                    randfunc: Callable) -> int:
-    order_bits = 0
-    order = curve.n
-
-    while order > 0:
-        order >>= 1
-        order_bits += 1
-
-    order_bytes = (order_bits + 7) // 8
-    extra_bits = order_bytes * 8 - order_bits
-
-    rand = int(hexlify(randfunc(order_bytes)), 16)
-    rand >>= extra_bits
-
-    while rand >= curve.n:
-        rand = int(hexlify(randfunc(order_bytes)), 16)
-        rand >>= extra_bits
-
+def gen_private_key(
+    curve_: curve.Curve,
+    rand_func: typing.Callable[[int], bytes] | None = None,
+) -> int:
+    rand_func = rand_func or os.urandom
+    order = curve_.n
+    order_bits = order.bit_length()
+    rand = 0
+    # in [1, order)
+    while rand == 0 or rand >= order:
+        rand = utils.random_nbits_int(order_bits, rand_func)
     return rand
 
 
-def get_public_key(d: int, curve: Curve) -> Point:
-    return d * curve.G
+def get_public_key(d: int, curve_: curve.Curve) -> curve.Point:
+    assert 1 <= d < curve_.n
+    return d * curve_.G
