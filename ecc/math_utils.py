@@ -3,7 +3,7 @@ def modinv(a: int, m: int) -> int:
 
 
 # https://github.com/darkwallet/python-obelisk/blob/5812ccfd78a66963f7238d9835607908a8c8f392/obelisk/numbertheory.py
-def modsqrt(a, p):
+def modsqrt(a: int, p: int) -> int:
     """ Find a quadratic residue (mod p) of 'a'. p
     must be an odd prime.
     Solve the congruence of the form:
@@ -84,7 +84,7 @@ def modsqrt(a, p):
         r = m
 
 
-def legendre_symbol(a, p):
+def legendre_symbol(a: int, p: int) -> int:
     """ Compute the Legendre symbol a|p using
     Euler's criterion. p is a prime, a is
     relatively prime to p (if p divides
