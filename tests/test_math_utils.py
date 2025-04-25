@@ -1,7 +1,7 @@
 import unittest
 
-from ecc.math_utils.mod_sqrt import modsqrt
-from ecc.math_utils.mod_inverse import modinv
+from ecc.math_utils import modsqrt
+from ecc.math_utils import modinv
 
 
 SMALL_PRIME = 97

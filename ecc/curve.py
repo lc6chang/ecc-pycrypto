@@ -4,8 +4,8 @@ from os import urandom
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
-from ecc.math_utils.mod_inverse import modinv
-from ecc.math_utils.mod_sqrt import modsqrt
+from ecc.math_utils import modinv
+from ecc.math_utils import modsqrt
 from ecc.utils import int_length_in_byte
 
 
