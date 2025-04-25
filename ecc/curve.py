@@ -6,7 +6,7 @@ from dataclasses import dataclass
 
 from ecc.math_utils import modinv
 from ecc.math_utils import modsqrt
-from ecc.utils import int_length_in_byte
+from ecc.utils import byte_length
 
 
 @dataclass
@@ -176,7 +176,7 @@ class Curve(ABC):
 
     def decode_point(self, M: Point) -> bytes:
         assert M.x is not None
-        byte_len = int_length_in_byte(M.x)
+        byte_len = byte_length(M.x)
         plaintext_len = (M.x >> ((byte_len - 1) * 8)) & 0xff
         plaintext = ((M.x >> ((byte_len - plaintext_len - 1) * 8))
                      & (int.from_bytes(b"\xff" * plaintext_len, "big")))

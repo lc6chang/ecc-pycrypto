@@ -1,7 +1,3 @@
-def int_length_in_byte(n: int):
+def byte_length(n: int) -> int:
     assert n >= 0
-    length = 0
-    while n:
-        n >>= 8
-        length += 1
-    return length
+    return (n.bit_length() + 7) // 8
