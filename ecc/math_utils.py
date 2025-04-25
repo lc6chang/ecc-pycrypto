@@ -1,6 +1,8 @@
+def modinv(a: int, m: int) -> int:
+    return pow(a, -1, m)
+
+
 # https://github.com/darkwallet/python-obelisk/blob/5812ccfd78a66963f7238d9835607908a8c8f392/obelisk/numbertheory.py
-
-
 def modsqrt(a, p):
     """ Find a quadratic residue (mod p) of 'a'. p
     must be an odd prime.
@@ -32,9 +34,8 @@ def modsqrt(a, p):
     s = p - 1
     e = 0
     while s % 2 == 0:
-        # Interesting bug. s /= 2 and s = int(s) not equals to s //= 2
+        # Updated by lc6chang
         # s /= 2
-        # s = int(s)
         s //= 2
         e += 1
 
