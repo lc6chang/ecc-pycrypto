@@ -21,12 +21,7 @@ def gen_private_key(
 ) -> int:
     rand_func = rand_func or os.urandom
     order = curve_.n
-    order_bits = order.bit_length()
-    rand = 0
-    # in [1, order)
-    while rand == 0 or rand >= order:
-        rand = utils.random_nbits_int(order_bits, rand_func)
-    return rand
+    return utils.random_int_exclusive(order, rand_func)
 
 
 def get_public_key(d: int, curve_: curve.Curve) -> curve.Point:
