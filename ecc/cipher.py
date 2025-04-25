@@ -1,8 +1,8 @@
-import random
 import os
 import typing
 
 from ecc import curve
+from ecc import utils
 
 
 def elgamal_encrypt(
@@ -15,8 +15,7 @@ def elgamal_encrypt(
 
     G = curve_.G  # Base point G
     M = plaintext
-    random.seed(rand_func(1024))
-    k = random.randint(1, curve_.n)
+    k = utils.random_int_exclusive(curve_.n, rand_func)
 
     C1 = k * G
     C2 = M + k * public_key
