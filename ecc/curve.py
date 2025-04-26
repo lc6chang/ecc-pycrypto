@@ -15,6 +15,8 @@ class AbstractPoint(abc.ABC):
         return self.curve.neg_point(self)
 
     def __add__(self, other: AbstractPoint) -> AbstractPoint:
+        if self.curve != other.curve:
+            raise ValueError(f"{self} and {other} are on the different curves.")
         return self.curve.add_point(self, other)
 
     def __radd__(self, other: AbstractPoint) -> AbstractPoint:
@@ -130,7 +132,7 @@ class Curve(abc.ABC):
         pass
 
 
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True, repr=False)
 class ShortWeierstrassCurve(Curve):
     """
     y^2 = x^3 + a*x + b
@@ -171,7 +173,7 @@ class ShortWeierstrassCurve(Curve):
         return Point(self, P.x, -P.y % self.p)
 
 
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True, repr=False)
 class MontgomeryCurve(Curve):
     """
     by^2 = x^3 + ax^2 + x
@@ -216,7 +218,7 @@ class MontgomeryCurve(Curve):
         return Point(self, P.x, -P.y % self.p)
 
 
-@dataclasses.dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True, repr=False)
 class TwistedEdwardsCurve(Curve):
     """
     ax^2 + y^2 = 1 + bx^2y^2
