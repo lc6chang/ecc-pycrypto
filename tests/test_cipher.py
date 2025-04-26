@@ -1,17 +1,18 @@
 import unittest
 
 from ecc import curve
+from ecc import registry
 from ecc import cipher
 from ecc import key
 
 
 CURVES: list[curve.Curve] = [
-    curve.P256,
-    curve.secp256k1,
-    curve.Curve25519,
-    curve.M383,
-    curve.E222,
-    curve.E382,
+    registry.P256,
+    registry.secp256k1,
+    registry.Curve25519,
+    registry.M383,
+    registry.E222,
+    registry.E382,
 ]
 PLAINTEXT_BYTES = b"I am plaintext."
 
