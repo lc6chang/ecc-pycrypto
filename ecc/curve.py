@@ -114,7 +114,7 @@ class Curve(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def compute_y(self, x: int) -> int:
+    def compute_y(self, x: int) -> int | None:
         pass
 
     @abc.abstractmethod
@@ -142,7 +142,7 @@ class ShortWeierstrassCurve(Curve):
         right = (x * x * x) + (self.a * x) + self.b
         return (left - right) % self.p == 0
 
-    def compute_y(self, x) -> int:
+    def compute_y(self, x) -> int | None:
         right = (x * x * x + self.a * x + self.b) % self.p
         y = math_utils.modsqrt(right, self.p)
         return y
@@ -183,7 +183,7 @@ class MontgomeryCurve(Curve):
         right = (x * x * x) + (self.a * x * x) + x
         return (left - right) % self.p == 0
 
-    def compute_y(self, x: int) -> int:
+    def compute_y(self, x: int) -> int | None:
         right = (x * x * x + self.a * x * x + x) % self.p
         inv_b = math_utils.modinv(self.b, self.p)
         right = (right * inv_b) % self.p
@@ -228,7 +228,7 @@ class TwistedEdwardsCurve(Curve):
         right = 1 + self.b * x * x * y * y
         return (left - right) % self.p == 0
 
-    def compute_y(self, x: int) -> int:
+    def compute_y(self, x: int) -> int | None:
         # (bx^2 - 1) * y^2 = ax^2 - 1
         right = self.a * x * x - 1
         left_scale = (self.b * x * x - 1) % self.p
@@ -268,7 +268,7 @@ def encode(plaintext: bytes, curve: Curve) -> Point:
     while True:
         x = int.from_bytes(plaintext, "big")
         y = curve.compute_y(x)
-        if y:
+        if y is not None:
             return Point(curve, x, y)
         plaintext += os.urandom(1)
 

@@ -3,28 +3,26 @@ def modinv(a: int, m: int) -> int:
 
 
 # https://github.com/darkwallet/python-obelisk/blob/5812ccfd78a66963f7238d9835607908a8c8f392/obelisk/numbertheory.py
-def modsqrt(a: int, p: int) -> int:
-    """ Find a quadratic residue (mod p) of 'a'. p
-    must be an odd prime.
-    Solve the congruence of the form:
-    x^2 = a (mod p)
-    And returns x. Note that p - x is also a root.
-    0 is returned is no square root exists for
-    these a and p.
-    The Tonelli-Shanks algorithm is used (except
-    for some simple cases in which the solution
-    is known from an identity). This algorithm
-    runs in polynomial time (unless the
-    generalized Riemann hypothesis is false).
+def modsqrt(a: int, p: int) -> int | None:
     """
+    Find a quadratic residue (mod p) of 'a'.
+    Solve the congruence of the form: x^2 = a (mod p).
+    And returns x. Note that p - x is also a root.
+    None is returned is no square root exists for these a and p.
+    The Tonelli-Shanks algorithm is used (except for some simple
+    cases in which the solution is known from an identity).
+    This algorithm runs in polynomial time (unless the generalized
+    Riemann hypothesis is false).
+    """
+    a = a % p
     # Simple cases
     #
-    if legendre_symbol(a, p) != 1:
-        return 0
-    elif a == 0:
+    if a == 0:
         return 0
     elif p == 2:
-        return p
+        return a  # 1
+    elif legendre_symbol(a, p) == -1:
+        return None
     elif p % 4 == 3:
         return pow(a, (p + 1) // 4, p)
 
@@ -85,12 +83,11 @@ def modsqrt(a: int, p: int) -> int:
 
 
 def legendre_symbol(a: int, p: int) -> int:
-    """ Compute the Legendre symbol a|p using
-    Euler's criterion. p is a prime, a is
-    relatively prime to p (if p divides
-    a, then a|p = 0)
-    Returns 1 if a has a square root modulo
-    p, -1 otherwise.
     """
+    Compute the Legendre symbol a|p using Euler's criterion.
+    p is a prime, a is relatively prime to p (if p divides a, then a|p = 0).
+    Returns 1 if a has a square root modulo p, -1 otherwise.
+    """
+    assert p != 2
     ls = pow(a, (p - 1) // 2, p)
     return -1 if ls == p - 1 else ls

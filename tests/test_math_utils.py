@@ -8,6 +8,11 @@ BIG_PRIME = 2 ** 521 - 1
 
 
 class TestCaseModsqrt(unittest.TestCase):
+    def test_simple_cases(self):
+        self.assertEqual(math_utils.modsqrt(0, 2), 0)
+        self.assertEqual(math_utils.modsqrt(1, 2), 1)
+        self.assertEqual(math_utils.modsqrt(7, 7), 0)
+
     def test_small_prime_exist(self):
         self.assertIn(math_utils.modsqrt(24, SMALL_PRIME), [11, SMALL_PRIME - 11])
         self.assertIn(math_utils.modsqrt(4, SMALL_PRIME), [2, SMALL_PRIME - 2])
@@ -19,7 +24,7 @@ class TestCaseModsqrt(unittest.TestCase):
         )
 
     def test_small_prime_not_exist(self):
-        self.assertEqual(math_utils.modsqrt(92, SMALL_PRIME), 0)
+        self.assertIsNone(math_utils.modsqrt(92, SMALL_PRIME))
 
     def test_big_prime_exist(self):
         self.assertIn(math_utils.modsqrt(361, BIG_PRIME), [19, BIG_PRIME - 19])
@@ -29,7 +34,7 @@ class TestCaseModsqrt(unittest.TestCase):
         )
 
     def test_big_prime_not_exist(self):
-        self.assertEqual(math_utils.modsqrt(2 ** 130 + 2 ** 131, BIG_PRIME), 0)
+        self.assertIsNone(math_utils.modsqrt(2 ** 130 + 2 ** 131, BIG_PRIME))
 
 
 class TestCaseModinv(unittest.TestCase):

@@ -14,7 +14,7 @@ CURVES: list[curve.Curve] = [
 ]
 
 
-class PointAndCurveTestCase(unittest.TestCase):
+class TestCasePointAndCurve(unittest.TestCase):
     def test_operator(self):
         for curve_ in CURVES:
             with self.subTest(name=curve_.name):
@@ -33,7 +33,11 @@ class PointAndCurveTestCase(unittest.TestCase):
                 self.assertEqual(1000 * curve_.INF, curve_.INF)
 
     def test_double_points_y_equals_to_0(self):
-        P = curve.Point(x=0, y=0, curve=registry.Curve25519)
+        P = curve.Point(curve=registry.Curve25519, x=0, y=0)
         self.assertEqual(P + P, registry.Curve25519.INF)
         self.assertEqual(2 * P, registry.Curve25519.INF)
         self.assertEqual(-2 * P, registry.Curve25519.INF)
+
+    def test_point_not_on_curve(self):
+        with self.assertRaises(ValueError):
+            curve.Point(curve=registry.Curve25519, x=1, y=0)
