@@ -11,25 +11,25 @@ from ecc import utils
 class AbstractPoint(abc.ABC):
     curve: Curve
 
-    def __neg__(self) -> AbstractPoint:
+    def __neg__(self):
         return self.curve.neg_point(self)
 
-    def __add__(self, other: AbstractPoint) -> AbstractPoint:
+    def __add__(self, other):
         if self.curve != other.curve:
             raise ValueError(f"{self} and {other} are on the different curves.")
         return self.curve.add_point(self, other)
 
-    def __radd__(self, other: AbstractPoint) -> AbstractPoint:
+    def __radd__(self, other):
         return self.__add__(other)
 
-    def __sub__(self, other: AbstractPoint) -> AbstractPoint:
+    def __sub__(self, other):
         negative = -other
         return self.__add__(negative)
 
-    def __mul__(self, scalar: int) -> AbstractPoint:
+    def __mul__(self, scalar: int):
         return self.curve.mul_point(scalar, self)
 
-    def __rmul__(self, scalar: int) -> AbstractPoint:
+    def __rmul__(self, scalar: int):
         return self.__mul__(scalar)
 
 
@@ -79,6 +79,7 @@ class Curve(abc.ABC):
             return P
         if P == -Q:
             return self.INF
+        assert isinstance(P, Point) and isinstance(Q, Point)
         if P == Q:
             return self._double_point(P)
         return self._add_point(P, Q)
@@ -92,7 +93,7 @@ class Curve(abc.ABC):
         if d == 0:
             return self.INF
 
-        res = self.INF
+        res: AbstractPoint = self.INF
         is_negative_scalar = d < 0
         d = -d if is_negative_scalar else d
         tmp = P
@@ -109,6 +110,7 @@ class Curve(abc.ABC):
     def neg_point(self, P: AbstractPoint) -> AbstractPoint:
         if isinstance(P, InfinityPoint):
             return self.INF
+        assert isinstance(P, Point)
         return self._neg_point(P)
 
     @abc.abstractmethod
