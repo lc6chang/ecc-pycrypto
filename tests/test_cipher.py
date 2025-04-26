@@ -22,10 +22,10 @@ class TestCaseElGamal(unittest.TestCase):
         for curve_ in CURVES:
             with self.subTest(name=curve_.name):
                 pri_key, pub_key = key.gen_key_pair(curve_)
-                plaintext = curve_.encode_point(PLAINTEXT_BYTES)
+                plaintext = curve.encode(PLAINTEXT_BYTES, curve_)
                 C1, C2 = cipher.elgamal_encrypt(plaintext, pub_key)
                 plaintext_decrypted = cipher.elgamal_decrypt(pri_key, C1, C2)
-                plaintext_decrypted_bytes = curve_.decode_point(plaintext_decrypted)
+                plaintext_decrypted_bytes = curve.decode(plaintext_decrypted)
                 self.assertEqual(plaintext_decrypted_bytes, PLAINTEXT_BYTES)
 
     def test_additive_homomorphism_encryption(self):

@@ -1,9 +1,13 @@
 from __future__ import annotations
 import dataclasses
 import abc
+import os
+
+from ecc import math_utils
+from ecc import utils
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class AbstractPoint(abc.ABC):
     curve: Curve
 
@@ -27,22 +31,22 @@ class AbstractPoint(abc.ABC):
         return self.__mul__(scalar)
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class Point(AbstractPoint):
     x: int
     y: int
 
     def __post_init__(self):
-        if not self.curve.is_on_curve(self):
+        if not self.curve.is_on_curve(self.x, self.y):
             raise ValueError(f"{self} is not on the curve.")
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class InfinityPoint(AbstractPoint):
     pass
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class Curve(abc.ABC):
     name: str
     a: int
@@ -57,3 +61,223 @@ class Curve(abc.ABC):
 
     def __repr__(self) -> str:
         return self.__str__()
+
+    @property
+    def G(self) -> Point:
+        return Point(self, self.G_x, self.G_y)
+
+    @property
+    def INF(self) -> InfinityPoint:
+        return InfinityPoint(self)
+
+    def add_point(self, P: AbstractPoint, Q: AbstractPoint) -> AbstractPoint:
+        if isinstance(P, InfinityPoint):
+            return Q
+        elif isinstance(Q, InfinityPoint):
+            return P
+        if P == -Q:
+            return self.INF
+        if P == Q:
+            return self._double_point(P)
+        return self._add_point(P, Q)
+
+    def mul_point(self, d: int, P: AbstractPoint) -> AbstractPoint:
+        """
+        https://en.wikipedia.org/wiki/Elliptic_curve_point_multiplication
+        """
+        if isinstance(P, InfinityPoint):
+            return self.INF
+        if d == 0:
+            return self.INF
+
+        res = self.INF
+        is_negative_scalar = d < 0
+        d = -d if is_negative_scalar else d
+        tmp = P
+        while d:
+            if d & 0x1 == 1:
+                res = self.add_point(res, tmp)
+            tmp = self.add_point(tmp, tmp)
+            d >>= 1
+        if is_negative_scalar:
+            return -res
+        else:
+            return res
+
+    def neg_point(self, P: AbstractPoint) -> AbstractPoint:
+        if isinstance(P, InfinityPoint):
+            return self.INF
+        return self._neg_point(P)
+
+    @abc.abstractmethod
+    def is_on_curve(self, x: int, y: int) -> bool:
+        pass
+
+    @abc.abstractmethod
+    def compute_y(self, x: int) -> int:
+        pass
+
+    @abc.abstractmethod
+    def _add_point(self, P: Point, Q: Point) -> Point:
+        pass
+
+    @abc.abstractmethod
+    def _double_point(self, P: Point) -> Point:
+        pass
+
+    @abc.abstractmethod
+    def _neg_point(self, P: Point) -> Point:
+        pass
+
+
+@dataclasses.dataclass(frozen=True)
+class ShortWeierstrassCurve(Curve):
+    """
+    y^2 = x^3 + a*x + b
+    https://en.wikipedia.org/wiki/Elliptic_curve
+    """
+
+    def is_on_curve(self, x: int, y: int) -> bool:
+        left = y * y
+        right = (x * x * x) + (self.a * x) + self.b
+        return (left - right) % self.p == 0
+
+    def compute_y(self, x) -> int:
+        right = (x * x * x + self.a * x + self.b) % self.p
+        y = math_utils.modsqrt(right, self.p)
+        return y
+
+    def _add_point(self, P: Point, Q: Point) -> Point:
+        # s = (yP - yQ) / (xP - xQ)
+        # xR = s^2 - xP - xQ
+        # yR = yP + s * (xR - xP)
+        delta_x = P.x - Q.x
+        delta_y = P.y - Q.y
+        s = delta_y * math_utils.modinv(delta_x, self.p)
+        res_x = (s * s - P.x - Q.x) % self.p
+        res_y = (P.y + s * (res_x - P.x)) % self.p
+        return -Point(self, res_x, res_y)
+
+    def _double_point(self, P: Point) -> Point:
+        # s = (3 * xP^2 + a) / (2 * yP)
+        # xR = s^2 - 2 * xP
+        # yR = yP + s * (xR - xP)
+        s = (3 * P.x * P.x + self.a) * math_utils.modinv(2 * P.y, self.p)
+        res_x = (s * s - 2 * P.x) % self.p
+        res_y = (P.y + s * (res_x - P.x)) % self.p
+        return -Point(self, res_x, res_y)
+
+    def _neg_point(self, P: Point) -> Point:
+        return Point(self, P.x, -P.y % self.p)
+
+
+@dataclasses.dataclass(frozen=True)
+class MontgomeryCurve(Curve):
+    """
+    by^2 = x^3 + ax^2 + x
+    https://en.wikipedia.org/wiki/Montgomery_curve
+    """
+
+    def is_on_curve(self, x: int, y: int) -> bool:
+        left = self.b * y * y
+        right = (x * x * x) + (self.a * x * x) + x
+        return (left - right) % self.p == 0
+
+    def compute_y(self, x: int) -> int:
+        right = (x * x * x + self.a * x * x + x) % self.p
+        inv_b = math_utils.modinv(self.b, self.p)
+        right = (right * inv_b) % self.p
+        y = math_utils.modsqrt(right, self.p)
+        return y
+
+    def _add_point(self, P: Point, Q: Point) -> Point:
+        # s = (yP - yQ) / (xP - xQ)
+        # xR = b * s^2 - a - xP - xQ
+        # yR = yP + s * (xR - xP)
+        delta_x = P.x - Q.x
+        delta_y = P.y - Q.y
+        s = delta_y * math_utils.modinv(delta_x, self.p)
+        res_x = (self.b * s * s - self.a - P.x - Q.x) % self.p
+        res_y = (P.y + s * (res_x - P.x)) % self.p
+        return -Point(self, res_x, res_y)
+
+    def _double_point(self, P: Point) -> Point:
+        # s = (3 * xP^2 + 2 * a * xP + 1) / (2 * b * yP)
+        # xR = b * s^2 - a - 2 * xP
+        # yR = yP + s * (xR - xP)
+        up = 3 * P.x * P.x + 2 * self.a * P.x + 1
+        down = 2 * self.b * P.y
+        s = up * math_utils.modinv(down, self.p)
+        res_x = (self.b * s * s - self.a - 2 * P.x) % self.p
+        res_y = (P.y + s * (res_x - P.x)) % self.p
+        return -Point(self, res_x, res_y)
+
+    def _neg_point(self, P: Point) -> Point:
+        return Point(self, P.x, -P.y % self.p)
+
+
+@dataclasses.dataclass(frozen=True)
+class TwistedEdwardsCurve(Curve):
+    """
+    ax^2 + y^2 = 1 + bx^2y^2
+    https://en.wikipedia.org/wiki/Twisted_Edwards_curve
+    """
+
+    def is_on_curve(self, x: int, y: int) -> bool:
+        left = self.a * x * x + y * y
+        right = 1 + self.b * x * x * y * y
+        return (left - right) % self.p == 0
+
+    def compute_y(self, x: int) -> int:
+        # (bx^2 - 1) * y^2 = ax^2 - 1
+        right = self.a * x * x - 1
+        left_scale = (self.b * x * x - 1) % self.p
+        inv_scale = math_utils.modinv(left_scale, self.p)
+        right = (right * inv_scale) % self.p
+        y = math_utils.modsqrt(right, self.p)
+        return y
+
+    def _add_point(self, P: Point, Q: Point) -> Point:
+        # xR = (xP * yQ + yP * xQ) / (1 + b * xP * xQ * yP * yQ)
+        up_x = P.x * Q.y + P.y * Q.x
+        down_x = 1 + self.b * P.x * Q.x * P.y * Q.y
+        res_x = (up_x * math_utils.modinv(down_x, self.p)) % self.p
+        # yR = (yP * yQ - a * xP * xQ) / (1 - b * xP * xQ * yP * yQ)
+        up_y = P.y * Q.y - self.a * P.x * Q.x
+        down_y = 1 - self.b * P.x * Q.x * P.y * Q.y
+        res_y = (up_y * math_utils.modinv(down_y, self.p)) % self.p
+        return Point(self, res_x, res_y)
+
+    def _double_point(self, P: Point) -> Point:
+        # xR = (2 * xP * yP) / (a * xP^2 + yP^2)
+        up_x = 2 * P.x * P.y
+        down_x = self.a * P.x * P.x + P.y * P.y
+        res_x = (up_x * math_utils.modinv(down_x, self.p)) % self.p
+        # yR = (yP^2 - a * xP * xP) / (2 - a * xP^2 - yP^2)
+        up_y = P.y * P.y - self.a * P.x * P.x
+        down_y = 2 - self.a * P.x * P.x - P.y * P.y
+        res_y = (up_y * math_utils.modinv(down_y, self.p)) % self.p
+        return Point(self, res_x, res_y)
+
+    def _neg_point(self, P: Point) -> Point:
+        return Point(self, -P.x % self.p, P.y)
+
+
+def encode(plaintext: bytes, curve: Curve) -> Point:
+    plaintext = len(plaintext).to_bytes(1, byteorder="big") + plaintext
+    while True:
+        x = int.from_bytes(plaintext, "big")
+        y = curve.compute_y(x)
+        if y:
+            return Point(curve, x, y)
+        plaintext += os.urandom(1)
+
+
+def decode(M: Point) -> bytes:
+    byte_len = utils.byte_length(M.x)
+    plaintext_len = (M.x >> ((byte_len - 1) * 8)) & 0xff
+    plaintext = (
+        (M.x >> ((byte_len - plaintext_len - 1) * 8)) &
+        (int.from_bytes(b"\xff" * plaintext_len, "big"))
+    )
+    return plaintext.to_bytes(plaintext_len, byteorder="big")
