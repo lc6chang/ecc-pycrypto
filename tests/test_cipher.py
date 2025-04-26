@@ -1,4 +1,5 @@
 import unittest
+import os
 
 from ecc import curve
 from ecc import registry
@@ -14,7 +15,6 @@ CURVES: list[curve.Curve] = [
     registry.E222,
     registry.E382,
 ]
-PLAINTEXT_BYTES = b"I am plaintext."
 
 
 class TestCaseElGamal(unittest.TestCase):
@@ -22,11 +22,12 @@ class TestCaseElGamal(unittest.TestCase):
         for curve_ in CURVES:
             with self.subTest(name=curve_.name):
                 pri_key, pub_key = key.gen_key_pair(curve_)
-                plaintext = curve.encode(PLAINTEXT_BYTES, curve_)
+                plaintext_bytes = os.urandom(16)
+                plaintext = curve.encode(plaintext_bytes, curve_)
                 C1, C2 = cipher.elgamal_encrypt(plaintext, pub_key)
                 plaintext_decrypted = cipher.elgamal_decrypt(pri_key, C1, C2)
                 plaintext_decrypted_bytes = curve.decode(plaintext_decrypted)
-                self.assertEqual(plaintext_decrypted_bytes, PLAINTEXT_BYTES)
+                self.assertEqual(plaintext_decrypted_bytes, plaintext_bytes)
 
     def test_additive_homomorphism_encryption(self):
         for curve_ in CURVES:
