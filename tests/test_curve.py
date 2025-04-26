@@ -38,6 +38,10 @@ class TestCasePointAndCurve(unittest.TestCase):
         self.assertEqual(2 * P, registry.Curve25519.INF)
         self.assertEqual(-2 * P, registry.Curve25519.INF)
 
+    def test_add_on_different_curves(self):
+        with self.assertRaises(ValueError):
+            registry.Curve25519.G + registry.E222.G
+
     def test_point_not_on_curve(self):
         with self.assertRaises(ValueError):
             curve.Point(curve=registry.Curve25519, x=1, y=0)
