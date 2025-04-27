@@ -111,7 +111,7 @@ class Curve(abc.ABC):
 
     @property
     @abc.abstractmethod
-    def O(self) -> Point:
+    def O(self) -> Point:  # noqa: E743
         """
         The neutral element.
         """
@@ -146,7 +146,7 @@ class ShortWeierstrassCurve(Curve):
     """
 
     @property
-    def O(self) -> Point:
+    def O(self) -> Point:  # noqa: E743
         return InfinityPoint(self)
 
     def is_on_curve(self, x: int, y: int) -> bool:
@@ -191,7 +191,7 @@ class MontgomeryCurve(Curve):
     """
 
     @property
-    def O(self) -> Point:
+    def O(self) -> Point:  # noqa: E743
         return InfinityPoint(self)
 
     def is_on_curve(self, x: int, y: int) -> bool:
@@ -240,7 +240,7 @@ class TwistedEdwardsCurve(Curve):
     """
 
     @property
-    def O(self) -> Point:
+    def O(self) -> Point:  # noqa: E743
         return AffinePoint(self, 0, 1)
 
     def is_on_curve(self, x: int, y: int) -> bool:
