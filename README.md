@@ -1,5 +1,5 @@
 # ecc-pycrypto
-This Python package provides simple and user-friendly implementation of ECC, including ElGamal encryption, ECDH and ECDSA.
+This Python package provides simple and user-friendly implementation of ECC, including ElGamal, ECDH and ECDSA.
 
 ## Introduction
 
