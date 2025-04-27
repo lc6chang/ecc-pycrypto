@@ -1,5 +1,5 @@
 # ecc-pycrypto
-This Python package provides simple and user-friendly implementation of ECC (Elliptic Curve Cryptography), including ElGamal encryption, ECDH (Elliptic Curve Diffie–Hellman) and ECDSA (Elliptic Curve Digital Signature Algorithm).
+This Python package provides simple and user-friendly implementation of ECC, including ElGamal, ECDH and ECDSA.
 
 ## Introduction
 
