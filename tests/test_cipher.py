@@ -44,7 +44,7 @@ class TestCaseElGamal(unittest.TestCase):
 
 
 class TestCaseECDH(unittest.TestCase):
-    def test_echd_shared(self):
+    def test_ecdh_shared(self):
         for curve_ in CURVES:
             with self.subTest(name=curve_.name):
                 alice_pri_key, alice_pub_key = key.gen_key_pair(curve_)
