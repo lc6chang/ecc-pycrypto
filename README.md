@@ -1,5 +1,5 @@
 # ecc-pycrypto
-This Python package provides easy-to-understand implementations of ECC (Elliptic Curve Cryptography) and ElGamal elliptic curve encryption.
+This Python package provides simple and user-friendly implementation of ECC (Elliptic Curve Cryptography), including ElGamal encryption, ECDH (Elliptic Curve Diffie–Hellman) and ECDSA (Elliptic Curve Digital Signature Algorithm).
 
 ## Introduction
 
@@ -9,7 +9,7 @@ This Python package provides easy-to-understand implementations of ECC (Elliptic
 
 + [ElGamal encryption](https://en.wikipedia.org/wiki/ElGamal_encryption) is a public-key cryptosystem that enables secure communication between two parties. The ElGamal elliptic curve variant can be explored further in the paper [Architectural Evaluation of Algorithms RSA, ECC and MQQ in Arm Processors](https://www.researchgate.net/publication/269672660_Architectural_Evaluation_of_Algorithms_RSA_ECC_and_MQQ_in_Arm_Processors).
 
-+ [Elliptic-curve Diffie–Hellman (ECDH)](https://en.wikipedia.org/wiki/Elliptic-curve_Diffie%E2%80%93Hellman) is a key agreement protocol that allows two parties, each having an elliptic-curve public–private key pair, to establish a shared secret over an insecure channel.
++ [Elliptic Curve Diffie–Hellman (ECDH)](https://en.wikipedia.org/wiki/Elliptic-curve_Diffie%E2%80%93Hellman) is a key agreement protocol that allows two parties, each having an elliptic-curve public–private key pair, to establish a shared secret over an insecure channel.
 
 + [Elliptic Curve Digital Signature Algorithm (ECDSA)](https://en.wikipedia.org/wiki/Elliptic_Curve_Digital_Signature_Algorithm) offers a variant of the [Digital Signature Algorithm (DSA)](https://en.wikipedia.org/wiki/Digital_Signature_Algorithm) which uses elliptic-curve cryptography.
 
@@ -70,7 +70,7 @@ MY_CURVE = curve.ShortWeierstrassCurve(
 ```
 
 
-### ElGamal elliptic curve encryption
+### ElGamal encryption
 
 ```python
 from ecc import curve, registry, key, cipher
