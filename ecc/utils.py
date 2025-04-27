@@ -30,4 +30,4 @@ def random_int_exclusive(
 
 
 def sha256(m: bytes) -> int:
-    return int(hashlib.sha256(m).hexdigest(),16)
+    return int(hashlib.sha256(m).hexdigest(), 16)
