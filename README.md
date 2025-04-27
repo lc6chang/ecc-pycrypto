@@ -1,21 +1,23 @@
 # ecc-pycrypto
-This is a Python package for ECC and ElGamal elliptic curve encryption.
+This Python package provides easy-to-understand implementations of ECC (Elliptic Curve Cryptography) and ElGamal elliptic curve encryption.
 
 ## Introduction
 
-+ [ElGamal encryption](https://en.wikipedia.org/wiki/ElGamal_encryption) is a public-key cryptosystem. It uses asymmetric key encryption for communicating between two parties and encrypting the message.
++ [Elliptic-curve cryptography (ECC)](https://en.wikipedia.org/wiki/Elliptic_curve_cryptography) is a form of public-key cryptography based on the algebraic structure of elliptic curves over finite fields.
+  + [SafeCurves](https://safecurves.cr.yp.to/) provides a list of safe elliptic curves.
+  + The three common types of elliptic curves are: [Weierstrass Curve](https://en.wikipedia.org/wiki/Elliptic_curve), [Montgomery Curve](https://en.wikipedia.org/wiki/Montgomery_curve) and [Twisted Edwards Curve](https://en.wikipedia.org/wiki/Twisted_Edwards_curve).
 
-+ [Elliptic-curve cryptography (ECC)](https://en.wikipedia.org/wiki/Elliptic_curve_cryptography) is an approach to public-key cryptography based on the algebraic structure of elliptic curves over finite fields.
-  + [SafeCurves](https://safecurves.cr.yp.to/) shows us the safety Elliptic curve.
-  + There are three typical curves: [Weierstrass Curve](https://en.wikipedia.org/wiki/Elliptic_curve), [Montgomery Curve](https://en.wikipedia.org/wiki/Montgomery_curve) and [Twisted Edwards Curve](https://en.wikipedia.org/wiki/Twisted_Edwards_curve).
-
-+ For ElGamal elliptic curve crypto, please refer to [Architectural Evaluation of Algorithms RSA, ECC and MQQ in Arm Processors](https://www.researchgate.net/publication/269672660_Architectural_Evaluation_of_Algorithms_RSA_ECC_and_MQQ_in_Arm_Processors).
++ [ElGamal encryption](https://en.wikipedia.org/wiki/ElGamal_encryption) is a public-key cryptosystem that enables secure communication between two parties. The ElGamal elliptic curve variant can be explored further in the paper [Architectural Evaluation of Algorithms RSA, ECC and MQQ in Arm Processors](https://www.researchgate.net/publication/269672660_Architectural_Evaluation_of_Algorithms_RSA_ECC_and_MQQ_in_Arm_Processors).
 
 ## Warning
 
-This project only aims to help you learn and understand what is ECC and how the algorithm works. **Do not use it directly in the production environment!**
+This project is intended as an educational tool to help you learn and understand the concepts of ECC and how the algorithm works. **Do not use it in production environments!**
 
-Some cons: The operations of curve points are just implemented in a common way. We don't implement them using [Jacobian Coordinates](https://en.wikibooks.org/wiki/Cryptography/Prime_Curve/Jacobian_Coordinates). Also, we implement them in pure Python. It will be slower than C.
+Some limitations:
+
+- Curve point operations are implemented in a basic manner without using [Jacobian Coordinates](https://en.wikibooks.org/wiki/Cryptography/Prime_Curve/Jacobian_Coordinates).
+- The implementation is written in pure Python, which means it will be slower than a C-based implementation.
+
 
 ## Installation
 
@@ -25,70 +27,62 @@ $ cd ecc-pycrypto
 $ pip3 install .
 ```
 
-## Test
-
-```bash
-$ python3 -m unittest discover tests
-```
-
 ## Usages
 
-### ElGamal elliptic curve encryption and decryption
+### Elliptic curve operations
 
 ```python
-from ecc.curve import Curve25519
-from ecc.key import gen_keypair
-from ecc.cipher import ElGamal
+from ecc import curve, registry
 
+# Choose a curve from registry
+P256 = registry.P256
+# Define a point on the curve
+P = curve.AffinePoint(
+    curve=P256,
+    x=0x9d8b7f25322574b60f9914b240d79bf35ba7284d0c93a0b76acac49b931cbde6,
+    y=0x2aae8628ed337a97cecead2e61d0c188a979a4d1383382a3696b29b449072069,
+)
+# The base point
+G = P256.G  # AffinePoint(curve=P256, x=484395..., y=361342...)
+# The neutral point
+O = P256.O  # InfinityPoint(curve=P256)
+# Operations
+assert P + O == P
+assert P - P == O
+assert 100 * O == O
+assert P + P == 2 * P
+print(20 * P - 5 * G)  # >>> AffinePoint(curve=P256, x=280875..., y=737429...)
+# Define a custom curve
+MY_CURVE = curve.ShortWeierstrassCurve(
+    name="MY_CURVE",
+    a=...,
+    b=...,
+    p=...,
+    n=...,
+    G_x=...,
+    G_y=...,
+)
+```
+
+
+### ElGamal elliptic curve encryption
+
+```python
+from ecc import curve, registry, key, cipher
 
 # Plaintext
-plaintext = b"I am plaintext."
+plaintext_bytes = b"I am plaintext."
 # Generate key pair
-pri_key, pub_key = gen_keypair(Curve25519)
+pri_key, pub_key = key.gen_key_pair(registry.Curve25519)
+# Encode plaintext bytes into a point on the elliptic curve
+plaintext_point = curve.encode(plaintext_bytes, registry.Curve25519)
 # Encrypt using ElGamal algorithm
-cipher_elg = ElGamal(Curve25519)
-C1, C2 = cipher_elg.encrypt(plaintext, pub_key)
+C1, C2 = cipher.elgamal_encrypt(plaintext_point, pub_key)
 # Decrypt
-new_plaintext = cipher_elg.decrypt(pri_key, C1, C2)
-
-print(new_plaintext == plaintext)
-# >> True
-```
-
-## Common elliptic curve
-
-```python
-from ecc.curve import P256, Point
-
-# Common point
-P = Point(0x9d8b7f25322574b60f9914b240d79bf35ba7284d0c93a0b76acac49b931cbde6,
-          0x2aae8628ed337a97cecead2e61d0c188a979a4d1383382a3696b29b449072069,
-          P256)
-# Base point
-G = P256.G
-# Point at infinity
-INF = P256.INF
-
-assert P + INF == P
-assert G - G == INF
-assert 100 * INF == INF
-
-print(P + G)
-print(20 * P - 5 * G)
-```
-
-```python
-from ecc.curve import ShortWeierstrassCurve
-
-# You could also write your own Curve
-YOUR_CURVE = ShortWeierstrassCurve(
-  name=CURVE_NAME,
-  a=A,
-  b=B,
-  p=P,
-  n=N,
-  G_x=G_X,
-  G_y=G_Y
-)
+plaintext_point_decrypted = cipher.elgamal_decrypt(pri_key, C1, C2)
+# Decode the decrypted point back to plaintext bytes
+plaintext_bytes_decrypted = curve.decode(plaintext_point_decrypted)
+# Verify
+assert plaintext_bytes_decrypted == plaintext_bytes
 ```
 
