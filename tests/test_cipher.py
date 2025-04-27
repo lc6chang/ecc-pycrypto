@@ -1,5 +1,6 @@
 import unittest
 import os
+import random
 
 from ecc import curve
 from ecc import registry
@@ -22,7 +23,8 @@ class TestCaseElGamal(unittest.TestCase):
         for curve_ in CURVES:
             with self.subTest(name=curve_.name):
                 pri_key, pub_key = key.gen_key_pair(curve_)
-                plaintext_bytes = os.urandom(16)
+                plaintext_len = random.randint(0, 20)
+                plaintext_bytes = os.urandom(plaintext_len)
                 plaintext = curve.encode(plaintext_bytes, curve_)
                 C1, C2 = cipher.elgamal_encrypt(plaintext, pub_key)
                 plaintext_decrypted = cipher.elgamal_decrypt(pri_key, C1, C2)
