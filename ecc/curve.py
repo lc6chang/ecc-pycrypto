@@ -68,17 +68,13 @@ class Curve(abc.ABC):
     def G(self) -> AffinePoint:
         return AffinePoint(self, self.G_x, self.G_y)
 
-    @property
-    def INF(self) -> InfinityPoint:
-        return InfinityPoint(self)
-
     def add_point(self, P: Point, Q: Point) -> Point:
-        if isinstance(P, InfinityPoint):
+        if P == self.O:
             return Q
-        elif isinstance(Q, InfinityPoint):
+        if Q == self.O:
             return P
         if P == -Q:
-            return self.INF
+            return self.O
         assert isinstance(P, AffinePoint) and isinstance(Q, AffinePoint)
         if P == Q:
             return self._double_point(P)
@@ -88,12 +84,12 @@ class Curve(abc.ABC):
         """
         https://en.wikipedia.org/wiki/Elliptic_curve_point_multiplication
         """
-        if isinstance(P, InfinityPoint):
-            return self.INF
+        if P == self.O:
+            return self.O
         if d == 0:
-            return self.INF
+            return self.O
 
-        res: Point = self.INF
+        res: Point = self.O
         is_negative_scalar = d < 0
         d = -d if is_negative_scalar else d
         tmp = P
@@ -108,10 +104,18 @@ class Curve(abc.ABC):
             return res
 
     def neg_point(self, P: Point) -> Point:
-        if isinstance(P, InfinityPoint):
-            return self.INF
+        if P == self.O:
+            return self.O
         assert isinstance(P, AffinePoint)
         return self._neg_point(P)
+
+    @property
+    @abc.abstractmethod
+    def O(self) -> Point:
+        """
+        The neutral element.
+        """
+        pass
 
     @abc.abstractmethod
     def is_on_curve(self, x: int, y: int) -> bool:
@@ -140,6 +144,10 @@ class ShortWeierstrassCurve(Curve):
     y^2 = x^3 + a*x + b
     https://en.wikipedia.org/wiki/Elliptic_curve
     """
+
+    @property
+    def O(self) -> Point:
+        return InfinityPoint(self)
 
     def is_on_curve(self, x: int, y: int) -> bool:
         left = y * y
@@ -181,6 +189,10 @@ class MontgomeryCurve(Curve):
     by^2 = x^3 + ax^2 + x
     https://en.wikipedia.org/wiki/Montgomery_curve
     """
+
+    @property
+    def O(self) -> Point:
+        return InfinityPoint(self)
 
     def is_on_curve(self, x: int, y: int) -> bool:
         left = self.b * y * y
@@ -226,6 +238,10 @@ class TwistedEdwardsCurve(Curve):
     ax^2 + y^2 = 1 + bx^2y^2
     https://en.wikipedia.org/wiki/Twisted_Edwards_curve
     """
+
+    @property
+    def O(self) -> Point:
+        return AffinePoint(self, 0, 1)
 
     def is_on_curve(self, x: int, y: int) -> bool:
         left = self.a * x * x + y * y
