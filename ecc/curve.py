@@ -284,7 +284,7 @@ class TwistedEdwardsCurve(Curve):
 
 def encode(plaintext: bytes, curve: Curve) -> AffinePoint:
     # Here we assume the length can be represented in one byte.
-    byte_len = len(plaintext).to_bytes(1)
+    byte_len = len(plaintext).to_bytes(1, "little")
     plaintext = byte_len + plaintext
     while True:
         x = int.from_bytes(plaintext, "little")
