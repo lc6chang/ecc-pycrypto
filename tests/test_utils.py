@@ -1,17 +1,24 @@
 import unittest
+import os
 
-from ecc.utils import int_length_in_byte
+from ecc import utils
 
 
-class IntLengthInBytesTest(unittest.TestCase):
-    def test_zero(self):
-        self.assertEqual(int_length_in_byte(0), 0)
-
+class TestCaseRandomNbitsInt(unittest.TestCase):
     def test_positive(self):
-        self.assertEqual(int_length_in_byte(1024), 2)
-        self.assertEqual(int_length_in_byte(65535), 2)
-        self.assertEqual(int_length_in_byte(65536), 3)
+        self.assertTrue(utils.random_nbits_int(1, os.urandom).bit_length() <= 1)
+        self.assertTrue(utils.random_nbits_int(15, os.urandom).bit_length() <= 15)
+        self.assertTrue(utils.random_nbits_int(16, os.urandom).bit_length() <= 16)
 
-    def test_negative(self):
+    def test_zero_and_negative(self):
         with self.assertRaises(AssertionError):
-            int_length_in_byte(-1)
+            utils.random_nbits_int(0, os.urandom)
+        with self.assertRaises(AssertionError):
+            utils.random_nbits_int(-1, os.urandom)
+
+
+class TestCaseRandomIntExclusive(unittest.TestCase):
+    def test_basic(self):
+        self.assertEqual(utils.random_int_exclusive(2, os.urandom), 1)
+        self.assertIn(utils.random_int_exclusive(10, os.urandom), list(range(1, 10)))
+        self.assertIn(utils.random_int_exclusive(100, os.urandom), list(range(1, 100)))
