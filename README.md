@@ -13,11 +13,6 @@ This Python package provides easy-to-understand implementations of ECC (Elliptic
 
 This project is intended as an educational tool to help you learn and understand the concepts of ECC and how the algorithm works. **Do not use it in production environments!**
 
-Some limitations:
-
-- Curve point operations are implemented in a basic manner without using [Jacobian Coordinates](https://en.wikibooks.org/wiki/Cryptography/Prime_Curve/Jacobian_Coordinates).
-- The implementation is written in pure Python, which means it will be slower than a C-based implementation.
-
 
 ## Installation
 
@@ -70,11 +65,11 @@ MY_CURVE = curve.ShortWeierstrassCurve(
 ```python
 from ecc import curve, registry, key, cipher
 
-# Plaintext
+# Plaintext bytes
 plaintext_bytes = b"I am plaintext."
-# Generate key pair
+# Generate a key pair
 pri_key, pub_key = key.gen_key_pair(registry.Curve25519)
-# Encode plaintext bytes into a point on the elliptic curve
+# Encode plaintext bytes into a point on the curve
 plaintext_point = curve.encode(plaintext_bytes, registry.Curve25519)
 # Encrypt using ElGamal algorithm
 C1, C2 = cipher.elgamal_encrypt(plaintext_point, pub_key)
