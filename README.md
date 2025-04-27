@@ -11,6 +11,8 @@ This Python package provides easy-to-understand implementations of ECC (Elliptic
 
 + [Elliptic-curve Diffie–Hellman (ECDH)](https://en.wikipedia.org/wiki/Elliptic-curve_Diffie%E2%80%93Hellman) is a key agreement protocol that allows two parties, each having an elliptic-curve public–private key pair, to establish a shared secret over an insecure channel.
 
++ [Elliptic Curve Digital Signature Algorithm (ECDSA)](https://en.wikipedia.org/wiki/Elliptic_Curve_Digital_Signature_Algorithm) offers a variant of the [Digital Signature Algorithm (DSA)](https://en.wikipedia.org/wiki/Digital_Signature_Algorithm) which uses elliptic-curve cryptography.
+
 ## Warning
 
 This project is intended as an educational tool to help you learn and understand the concepts of ECC and how the algorithm works. **Do not use it in production environments!**
@@ -99,5 +101,17 @@ bob_pri_key, bob_pub_key = key.gen_key_pair(registry.Curve25519)
 alice_shared = cipher.ecdh_shared(alice_pri_key, bob_pub_key)
 bob_shared = cipher.ecdh_shared(bob_pri_key, alice_pub_key)
 assert alice_shared == bob_shared
+```
+
+### ECDSA sign and verify
+
+```python
+from ecc import registry, key, cipher
+
+plaintext_bytes = b"I am plaintext."
+pri_key, pub_key = key.gen_key_pair(registry.Curve25519)
+signature = cipher.ecdsa_sign(plaintext_bytes, pri_key, registry.Curve25519)
+assert cipher.ecdsa_verify(plaintext_bytes, signature, pub_key)
+assert not cipher.ecdsa_verify(plaintext_bytes[:-1], signature, pub_key)
 ```
 
