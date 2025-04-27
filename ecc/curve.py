@@ -4,7 +4,6 @@ import abc
 import os
 
 from ecc import math_utils
-from ecc import utils
 
 
 @dataclasses.dataclass(frozen=True)
