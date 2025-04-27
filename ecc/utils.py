@@ -1,11 +1,6 @@
 import typing
 
 
-def byte_length(n: int) -> int:
-    assert n >= 0
-    return (n.bit_length() + 7) // 8
-
-
 def random_nbits_int(
     num_bits: int,
     rand_func: typing.Callable[[int], bytes],
