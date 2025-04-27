@@ -4,7 +4,6 @@ import abc
 import os
 
 from ecc import math_utils
-from ecc import utils
 
 
 @dataclasses.dataclass(frozen=True)
@@ -284,9 +283,11 @@ class TwistedEdwardsCurve(Curve):
 
 
 def encode(plaintext: bytes, curve: Curve) -> AffinePoint:
-    plaintext = len(plaintext).to_bytes(1, byteorder="big") + plaintext
+    # Here we assume the length can be represented in one byte.
+    byte_len = len(plaintext).to_bytes(1, "little")
+    plaintext = byte_len + plaintext
     while True:
-        x = int.from_bytes(plaintext, "big")
+        x = int.from_bytes(plaintext, "little")
         y = curve.compute_y(x)
         if y is not None:
             return AffinePoint(curve, x, y)
@@ -294,10 +295,6 @@ def encode(plaintext: bytes, curve: Curve) -> AffinePoint:
 
 
 def decode(M: AffinePoint) -> bytes:
-    byte_len = utils.byte_length(M.x)
-    plaintext_len = (M.x >> ((byte_len - 1) * 8)) & 0xff
-    plaintext = (
-        (M.x >> ((byte_len - plaintext_len - 1) * 8)) &
-        (int.from_bytes(b"\xff" * plaintext_len, "big"))
-    )
-    return plaintext.to_bytes(plaintext_len, byteorder="big")
+    byte_len = M.x & 0xff
+    plaintext_int = (M.x >> 8) & (2**(byte_len * 8) - 1)
+    return plaintext_int.to_bytes(byte_len, byteorder="little")
