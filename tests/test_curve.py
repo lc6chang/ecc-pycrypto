@@ -33,7 +33,7 @@ class TestCasePointAndCurve(unittest.TestCase):
                 self.assertEqual(1000 * curve_.INF, curve_.INF)
 
     def test_double_points_y_equals_to_0(self):
-        P = curve.Point(curve=registry.Curve25519, x=0, y=0)
+        P = curve.AffinePoint(curve=registry.Curve25519, x=0, y=0)
         self.assertEqual(P + P, registry.Curve25519.INF)
         self.assertEqual(2 * P, registry.Curve25519.INF)
         self.assertEqual(-2 * P, registry.Curve25519.INF)
@@ -44,4 +44,4 @@ class TestCasePointAndCurve(unittest.TestCase):
 
     def test_point_not_on_curve(self):
         with self.assertRaises(ValueError):
-            curve.Point(curve=registry.Curve25519, x=1, y=0)
+            curve.AffinePoint(curve=registry.Curve25519, x=1, y=0)

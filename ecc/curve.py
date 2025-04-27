@@ -8,7 +8,7 @@ from ecc import utils
 
 
 @dataclasses.dataclass(frozen=True)
-class AbstractPoint(abc.ABC):
+class Point(abc.ABC):
     curve: Curve
 
     def __neg__(self):
@@ -34,7 +34,7 @@ class AbstractPoint(abc.ABC):
 
 
 @dataclasses.dataclass(frozen=True)
-class Point(AbstractPoint):
+class AffinePoint(Point):
     x: int
     y: int
 
@@ -44,7 +44,7 @@ class Point(AbstractPoint):
 
 
 @dataclasses.dataclass(frozen=True)
-class InfinityPoint(AbstractPoint):
+class InfinityPoint(Point):
     pass
 
 
@@ -65,26 +65,26 @@ class Curve(abc.ABC):
         return self.__str__()
 
     @property
-    def G(self) -> Point:
-        return Point(self, self.G_x, self.G_y)
+    def G(self) -> AffinePoint:
+        return AffinePoint(self, self.G_x, self.G_y)
 
     @property
     def INF(self) -> InfinityPoint:
         return InfinityPoint(self)
 
-    def add_point(self, P: AbstractPoint, Q: AbstractPoint) -> AbstractPoint:
+    def add_point(self, P: Point, Q: Point) -> Point:
         if isinstance(P, InfinityPoint):
             return Q
         elif isinstance(Q, InfinityPoint):
             return P
         if P == -Q:
             return self.INF
-        assert isinstance(P, Point) and isinstance(Q, Point)
+        assert isinstance(P, AffinePoint) and isinstance(Q, AffinePoint)
         if P == Q:
             return self._double_point(P)
         return self._add_point(P, Q)
 
-    def mul_point(self, d: int, P: AbstractPoint) -> AbstractPoint:
+    def mul_point(self, d: int, P: Point) -> Point:
         """
         https://en.wikipedia.org/wiki/Elliptic_curve_point_multiplication
         """
@@ -93,7 +93,7 @@ class Curve(abc.ABC):
         if d == 0:
             return self.INF
 
-        res: AbstractPoint = self.INF
+        res: Point = self.INF
         is_negative_scalar = d < 0
         d = -d if is_negative_scalar else d
         tmp = P
@@ -107,10 +107,10 @@ class Curve(abc.ABC):
         else:
             return res
 
-    def neg_point(self, P: AbstractPoint) -> AbstractPoint:
+    def neg_point(self, P: Point) -> Point:
         if isinstance(P, InfinityPoint):
             return self.INF
-        assert isinstance(P, Point)
+        assert isinstance(P, AffinePoint)
         return self._neg_point(P)
 
     @abc.abstractmethod
@@ -122,15 +122,15 @@ class Curve(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def _add_point(self, P: Point, Q: Point) -> Point:
+    def _add_point(self, P: AffinePoint, Q: AffinePoint) -> AffinePoint:
         pass
 
     @abc.abstractmethod
-    def _double_point(self, P: Point) -> Point:
+    def _double_point(self, P: AffinePoint) -> AffinePoint:
         pass
 
     @abc.abstractmethod
-    def _neg_point(self, P: Point) -> Point:
+    def _neg_point(self, P: AffinePoint) -> AffinePoint:
         pass
 
 
@@ -151,7 +151,7 @@ class ShortWeierstrassCurve(Curve):
         y = math_utils.modsqrt(right, self.p)
         return y
 
-    def _add_point(self, P: Point, Q: Point) -> Point:
+    def _add_point(self, P: AffinePoint, Q: AffinePoint) -> AffinePoint:
         # s = (yP - yQ) / (xP - xQ)
         # xR = s^2 - xP - xQ
         # yR = yP + s * (xR - xP)
@@ -160,19 +160,19 @@ class ShortWeierstrassCurve(Curve):
         s = delta_y * math_utils.modinv(delta_x, self.p)
         res_x = (s * s - P.x - Q.x) % self.p
         res_y = (P.y + s * (res_x - P.x)) % self.p
-        return -Point(self, res_x, res_y)
+        return -AffinePoint(self, res_x, res_y)
 
-    def _double_point(self, P: Point) -> Point:
+    def _double_point(self, P: AffinePoint) -> AffinePoint:
         # s = (3 * xP^2 + a) / (2 * yP)
         # xR = s^2 - 2 * xP
         # yR = yP + s * (xR - xP)
         s = (3 * P.x * P.x + self.a) * math_utils.modinv(2 * P.y, self.p)
         res_x = (s * s - 2 * P.x) % self.p
         res_y = (P.y + s * (res_x - P.x)) % self.p
-        return -Point(self, res_x, res_y)
+        return -AffinePoint(self, res_x, res_y)
 
-    def _neg_point(self, P: Point) -> Point:
-        return Point(self, P.x, -P.y % self.p)
+    def _neg_point(self, P: AffinePoint) -> AffinePoint:
+        return AffinePoint(self, P.x, -P.y % self.p)
 
 
 @dataclasses.dataclass(frozen=True, repr=False)
@@ -194,7 +194,7 @@ class MontgomeryCurve(Curve):
         y = math_utils.modsqrt(right, self.p)
         return y
 
-    def _add_point(self, P: Point, Q: Point) -> Point:
+    def _add_point(self, P: AffinePoint, Q: AffinePoint) -> AffinePoint:
         # s = (yP - yQ) / (xP - xQ)
         # xR = b * s^2 - a - xP - xQ
         # yR = yP + s * (xR - xP)
@@ -203,9 +203,9 @@ class MontgomeryCurve(Curve):
         s = delta_y * math_utils.modinv(delta_x, self.p)
         res_x = (self.b * s * s - self.a - P.x - Q.x) % self.p
         res_y = (P.y + s * (res_x - P.x)) % self.p
-        return -Point(self, res_x, res_y)
+        return -AffinePoint(self, res_x, res_y)
 
-    def _double_point(self, P: Point) -> Point:
+    def _double_point(self, P: AffinePoint) -> AffinePoint:
         # s = (3 * xP^2 + 2 * a * xP + 1) / (2 * b * yP)
         # xR = b * s^2 - a - 2 * xP
         # yR = yP + s * (xR - xP)
@@ -214,10 +214,10 @@ class MontgomeryCurve(Curve):
         s = up * math_utils.modinv(down, self.p)
         res_x = (self.b * s * s - self.a - 2 * P.x) % self.p
         res_y = (P.y + s * (res_x - P.x)) % self.p
-        return -Point(self, res_x, res_y)
+        return -AffinePoint(self, res_x, res_y)
 
-    def _neg_point(self, P: Point) -> Point:
-        return Point(self, P.x, -P.y % self.p)
+    def _neg_point(self, P: AffinePoint) -> AffinePoint:
+        return AffinePoint(self, P.x, -P.y % self.p)
 
 
 @dataclasses.dataclass(frozen=True, repr=False)
@@ -241,7 +241,7 @@ class TwistedEdwardsCurve(Curve):
         y = math_utils.modsqrt(right, self.p)
         return y
 
-    def _add_point(self, P: Point, Q: Point) -> Point:
+    def _add_point(self, P: AffinePoint, Q: AffinePoint) -> AffinePoint:
         # xR = (xP * yQ + yP * xQ) / (1 + b * xP * xQ * yP * yQ)
         up_x = P.x * Q.y + P.y * Q.x
         down_x = 1 + self.b * P.x * Q.x * P.y * Q.y
@@ -250,9 +250,9 @@ class TwistedEdwardsCurve(Curve):
         up_y = P.y * Q.y - self.a * P.x * Q.x
         down_y = 1 - self.b * P.x * Q.x * P.y * Q.y
         res_y = (up_y * math_utils.modinv(down_y, self.p)) % self.p
-        return Point(self, res_x, res_y)
+        return AffinePoint(self, res_x, res_y)
 
-    def _double_point(self, P: Point) -> Point:
+    def _double_point(self, P: AffinePoint) -> AffinePoint:
         # xR = (2 * xP * yP) / (a * xP^2 + yP^2)
         up_x = 2 * P.x * P.y
         down_x = self.a * P.x * P.x + P.y * P.y
@@ -261,23 +261,23 @@ class TwistedEdwardsCurve(Curve):
         up_y = P.y * P.y - self.a * P.x * P.x
         down_y = 2 - self.a * P.x * P.x - P.y * P.y
         res_y = (up_y * math_utils.modinv(down_y, self.p)) % self.p
-        return Point(self, res_x, res_y)
+        return AffinePoint(self, res_x, res_y)
 
-    def _neg_point(self, P: Point) -> Point:
-        return Point(self, -P.x % self.p, P.y)
+    def _neg_point(self, P: AffinePoint) -> AffinePoint:
+        return AffinePoint(self, -P.x % self.p, P.y)
 
 
-def encode(plaintext: bytes, curve: Curve) -> Point:
+def encode(plaintext: bytes, curve: Curve) -> AffinePoint:
     plaintext = len(plaintext).to_bytes(1, byteorder="big") + plaintext
     while True:
         x = int.from_bytes(plaintext, "big")
         y = curve.compute_y(x)
         if y is not None:
-            return Point(curve, x, y)
+            return AffinePoint(curve, x, y)
         plaintext += os.urandom(1)
 
 
-def decode(M: Point) -> bytes:
+def decode(M: AffinePoint) -> bytes:
     byte_len = utils.byte_length(M.x)
     plaintext_len = (M.x >> ((byte_len - 1) * 8)) & 0xff
     plaintext = (
