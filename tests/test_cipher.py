@@ -41,3 +41,14 @@ class TestCaseElGamal(unittest.TestCase):
                 C3, C4 = cipher.elgamal_encrypt(plaintext2, pub_key)
                 plaintext = cipher.elgamal_decrypt(pri_key, C1 + C3, C2 + C4)
                 self.assertEqual(plaintext, plaintext1 + plaintext2)
+
+
+class TestCaseECDH(unittest.TestCase):
+    def test_ecdh_shared(self):
+        for curve_ in CURVES:
+            with self.subTest(name=curve_.name):
+                alice_pri_key, alice_pub_key = key.gen_key_pair(curve_)
+                bob_pri_key, bob_pub_key = key.gen_key_pair(curve_)
+                alice_shared = cipher.ecdh_shared(alice_pri_key, bob_pub_key)
+                bob_shared = cipher.ecdh_shared(bob_pri_key, alice_pub_key)
+                self.assertEqual(alice_shared, bob_shared)
