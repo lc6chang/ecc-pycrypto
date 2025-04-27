@@ -1,4 +1,5 @@
 import typing
+import hashlib
 
 
 def random_nbits_int(
@@ -26,3 +27,7 @@ def random_int_exclusive(
     while rand < 1 or rand >= stop:
         rand = random_nbits_int(num_bits, rand_func)
     return rand
+
+
+def sha256(m: bytes) -> int:
+    return int(hashlib.sha256(m).hexdigest(),16)

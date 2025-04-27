@@ -43,7 +43,7 @@ class TestCaseElGamal(unittest.TestCase):
                 self.assertEqual(plaintext, plaintext1 + plaintext2)
 
 
-class TestCaseECDH(unittest.TestCase):
+class TestCaseEcdh(unittest.TestCase):
     def test_ecdh_shared(self):
         for curve_ in CURVES:
             with self.subTest(name=curve_.name):
@@ -52,3 +52,23 @@ class TestCaseECDH(unittest.TestCase):
                 alice_shared = cipher.ecdh_shared(alice_pri_key, bob_pub_key)
                 bob_shared = cipher.ecdh_shared(bob_pri_key, alice_pub_key)
                 self.assertEqual(alice_shared, bob_shared)
+
+
+class TestEcdsa(unittest.TestCase):
+    def test_ecdsa_valid(self):
+        for curve_ in CURVES:
+            with self.subTest(name=curve_.name):
+                plaintext_bytes = os.urandom(128)
+                pri_key, pub_key = key.gen_key_pair(curve_)
+                signature = cipher.ecdsa_sign(plaintext_bytes, pri_key, curve_,)
+                verify = cipher.ecdsa_verify(plaintext_bytes, signature, pub_key)
+                self.assertTrue(verify)
+
+    def test_ecdsa_invalid(self):
+        for curve_ in CURVES:
+            with self.subTest(name=curve_.name):
+                plaintext_bytes = os.urandom(128)
+                pri_key, pub_key = key.gen_key_pair(curve_)
+                signature = cipher.ecdsa_sign(plaintext_bytes, pri_key, curve_,)
+                verify = cipher.ecdsa_verify(plaintext_bytes[:-1], signature, pub_key)
+                self.assertFalse(verify)

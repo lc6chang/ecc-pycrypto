@@ -31,6 +31,7 @@ class TestCasePointAndCurve(unittest.TestCase):
                 self.assertEqual(curve_.O + curve_.O, curve_.O)
                 self.assertEqual(0 * P, curve_.O)
                 self.assertEqual(1000 * curve_.O, curve_.O)
+                self.assertEqual(curve_.n * curve_.G, curve_.O)
 
     def test_double_points_y_equals_to_0(self):
         P = curve.AffinePoint(curve=registry.Curve25519, x=0, y=0)
