@@ -22,6 +22,12 @@ $ cd ecc-pycrypto
 $ pip3 install .
 ```
 
+or
+
+```bash
+$ pip3 install git+https://github.com/lc6chang/ecc-pycrypto.git
+```
+
 ## Usages
 
 ### Elliptic curve operations
