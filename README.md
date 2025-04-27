@@ -3,11 +3,13 @@ This Python package provides easy-to-understand implementations of ECC (Elliptic
 
 ## Introduction
 
-+ [Elliptic-curve cryptography (ECC)](https://en.wikipedia.org/wiki/Elliptic_curve_cryptography) is a form of public-key cryptography based on the algebraic structure of elliptic curves over finite fields.
++ [Elliptic-curve cryptography (ECC)](https://en.wikipedia.org/wiki/Elliptic_curve_cryptography) is an approach to public-key cryptography based on the algebraic structure of elliptic curves over finite fields.
   + [SafeCurves](https://safecurves.cr.yp.to/) provides a list of safe elliptic curves.
   + The three common types of elliptic curves are: [Weierstrass Curve](https://en.wikipedia.org/wiki/Elliptic_curve), [Montgomery Curve](https://en.wikipedia.org/wiki/Montgomery_curve) and [Twisted Edwards Curve](https://en.wikipedia.org/wiki/Twisted_Edwards_curve).
 
 + [ElGamal encryption](https://en.wikipedia.org/wiki/ElGamal_encryption) is a public-key cryptosystem that enables secure communication between two parties. The ElGamal elliptic curve variant can be explored further in the paper [Architectural Evaluation of Algorithms RSA, ECC and MQQ in Arm Processors](https://www.researchgate.net/publication/269672660_Architectural_Evaluation_of_Algorithms_RSA_ECC_and_MQQ_in_Arm_Processors).
+
++ [Elliptic-curve Diffie–Hellman (ECDH)](https://en.wikipedia.org/wiki/Elliptic-curve_Diffie%E2%80%93Hellman) is a key agreement protocol that allows two parties, each having an elliptic-curve public–private key pair, to establish a shared secret over an insecure channel.
 
 ## Warning
 
@@ -17,15 +19,15 @@ This project is intended as an educational tool to help you learn and understand
 ## Installation
 
 ```bash
-$ git clone git@github.com:lc6chang/ecc-pycrypto.git
-$ cd ecc-pycrypto
-$ pip3 install .
+git clone git@github.com:lc6chang/ecc-pycrypto.git
+cd ecc-pycrypto
+pip3 install .
 ```
 
 or
 
 ```bash
-$ pip3 install git+https://github.com/lc6chang/ecc-pycrypto.git
+pip3 install git+https://github.com/lc6chang/ecc-pycrypto.git
 ```
 
 ## Usages
@@ -85,5 +87,17 @@ plaintext_point_decrypted = cipher.elgamal_decrypt(pri_key, C1, C2)
 plaintext_bytes_decrypted = curve.decode(plaintext_point_decrypted)
 # Verify
 assert plaintext_bytes_decrypted == plaintext_bytes
+```
+
+### ECDH shared secret
+
+```python
+from ecc import registry, key, cipher
+
+alice_pri_key, alice_pub_key = key.gen_key_pair(registry.Curve25519)
+bob_pri_key, bob_pub_key = key.gen_key_pair(registry.Curve25519)
+alice_shared = cipher.ecdh_shared(alice_pri_key, bob_pub_key)
+bob_shared = cipher.ecdh_shared(bob_pri_key, alice_pub_key)
+assert alice_shared == bob_shared
 ```
 

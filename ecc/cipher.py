@@ -29,3 +29,10 @@ def elgamal_decrypt(
 ) -> curve.Point:
     M = C2 + (C1.curve.n - private_key) * C1
     return M
+
+
+def ecdh_shared(
+    self_private_key: int,
+    other_public_key: curve.Point,
+) -> curve.Point:
+    return self_private_key * other_public_key
