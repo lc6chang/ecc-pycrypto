@@ -72,3 +72,10 @@ class TestEcdsa(unittest.TestCase):
                 signature = cipher.ecdsa_sign(plaintext_bytes, pri_key, curve_)
                 verify = cipher.ecdsa_verify(plaintext_bytes[:-1], signature, pub_key)
                 self.assertFalse(verify)
+
+
+class TestEncode(unittest.TestCase):
+    def test_plaintext_too_long(self):
+        long_plaintext = os.urandom(256)
+        with self.assertRaises(ValueError):
+            curve.encode(long_plaintext, registry.P256)

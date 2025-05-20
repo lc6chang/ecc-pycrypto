@@ -284,6 +284,8 @@ class TwistedEdwardsCurve(Curve):
 
 def encode(plaintext: bytes, curve: Curve) -> AffinePoint:
     # Here we assume the length can be represented in one byte.
+    if len(plaintext) >= 256:
+        raise ValueError("plaintext too long")
     byte_len = len(plaintext).to_bytes(1, "little")
     plaintext = byte_len + plaintext
     while True:
