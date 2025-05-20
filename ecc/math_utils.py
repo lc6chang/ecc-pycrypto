@@ -8,7 +8,7 @@ def modsqrt(a: int, p: int) -> int | None:
     Find a quadratic residue (mod p) of 'a'.
     Solve the congruence of the form: x^2 = a (mod p).
     And returns x. Note that p - x is also a root.
-    None is returned is no square root exists for these a and p.
+    None is returned if no square root exists for these a and p.
     The Tonelli-Shanks algorithm is used (except for some simple
     cases in which the solution is known from an identity).
     This algorithm runs in polynomial time (unless the generalized
