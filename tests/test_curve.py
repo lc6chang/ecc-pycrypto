@@ -1,4 +1,5 @@
 import unittest
+import os
 
 from ecc import curve
 from ecc import registry
@@ -46,3 +47,10 @@ class TestCasePointAndCurve(unittest.TestCase):
     def test_point_not_on_curve(self):
         with self.assertRaises(ValueError):
             curve.AffinePoint(curve=registry.Curve25519, x=1, y=0)
+
+
+class TestEncode(unittest.TestCase):
+    def test_plaintext_too_long(self):
+        long_plaintext = os.urandom(256)
+        with self.assertRaises(ValueError):
+            curve.encode(long_plaintext, registry.P256)
