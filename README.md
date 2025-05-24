@@ -1,21 +1,13 @@
 # ecc-pycrypto
 This Python package provides simple and user-friendly implementation of ECC, supporting ElGamal encryption, ECDH and ECDSA algorithms.
 
-## Introduction
+## Features
 
-+ [Elliptic-curve cryptography (ECC)](https://en.wikipedia.org/wiki/Elliptic_curve_cryptography) is an approach to public-key cryptography based on the algebraic structure of elliptic curves over finite fields.
-  + [SafeCurves](https://safecurves.cr.yp.to/) provides a list of safe elliptic curves.
-  + The three common types of elliptic curves are: [Weierstrass Curve](https://en.wikipedia.org/wiki/Elliptic_curve), [Montgomery Curve](https://en.wikipedia.org/wiki/Montgomery_curve) and [Twisted Edwards Curve](https://en.wikipedia.org/wiki/Twisted_Edwards_curve).
-
-+ [ElGamal encryption](https://en.wikipedia.org/wiki/ElGamal_encryption) is a public-key cryptosystem that enables secure communication between two parties. The ElGamal elliptic curve variant can be explored further in the paper [Architectural Evaluation of Algorithms RSA, ECC and MQQ in Arm Processors](https://www.researchgate.net/publication/269672660_Architectural_Evaluation_of_Algorithms_RSA_ECC_and_MQQ_in_Arm_Processors).
-
-+ [Elliptic Curve Diffie–Hellman (ECDH)](https://en.wikipedia.org/wiki/Elliptic-curve_Diffie%E2%80%93Hellman) is a key agreement protocol that allows two parties, each having an elliptic-curve public–private key pair, to establish a shared secret over an insecure channel.
-
-+ [Elliptic Curve Digital Signature Algorithm (ECDSA)](https://en.wikipedia.org/wiki/Elliptic_Curve_Digital_Signature_Algorithm) offers a variant of the [Digital Signature Algorithm (DSA)](https://en.wikipedia.org/wiki/Digital_Signature_Algorithm) which uses elliptic-curve cryptography.
-
-## Warning
-
-This project is intended as an educational tool to help you learn and understand the concepts of ECC and how the algorithm works. **Do not use it in production environments!**
++ ✨ Pure Python, no external dependencies.
++ 📚 Great for learning ECC principles.
++ 🔍 Readable and hackable (<800 lines), easy to extend and experiment with.
++ 📐 Supports multiple and custom elliptic curves.
++ 🔢 Implements point operations, ElGamal, ECDH and ECDSA.
 
 
 ## Installation
@@ -115,3 +107,11 @@ assert cipher.ecdsa_verify(plaintext_bytes, signature, pub_key)
 assert not cipher.ecdsa_verify(plaintext_bytes[:-1], signature, pub_key)
 ```
 
+## References
+
++ [Elliptic Curve Cryptography (ECC)](https://en.wikipedia.org/wiki/Elliptic-curve_cryptography).
++ [SafeCurves](https://safecurves.cr.yp.to/): choosing safe curves for elliptic-curve cryptography.
++ Elliptic Curve types: [Weierstrass Curve](https://en.wikipedia.org/wiki/Elliptic_curve), [Montgomery Curve](https://en.wikipedia.org/wiki/Montgomery_curve) and [Twisted Edwards Curve](https://en.wikipedia.org/wiki/Twisted_Edwards_curve).
++ The [ElGamal](https://en.wikipedia.org/wiki/ElGamal_encryption) elliptic curve variant: [Architectural Evaluation of Algorithms RSA, ECC and MQQ in Arm Processors](https://www.researchgate.net/publication/269672660_Architectural_Evaluation_of_Algorithms_RSA_ECC_and_MQQ_in_Arm_Processors).
++ [Elliptic Curve Diffie–Hellman (ECDH)](https://en.wikipedia.org/wiki/Elliptic-curve_Diffie%E2%80%93Hellman).
++ [Elliptic Curve Digital Signature Algorithm (ECDSA)](https://en.wikipedia.org/wiki/Elliptic_Curve_Digital_Signature_Algorithm).
